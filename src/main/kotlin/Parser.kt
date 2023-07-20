@@ -1,4 +1,4 @@
-package dceu
+package dlex
 
 class Parser (lexer_: Lexer)
 {

@@ -1,4 +1,4 @@
-import dceu.*
+import dlex.*
 import org.junit.Test
 
 fun trap (f: ()->Unit): String {

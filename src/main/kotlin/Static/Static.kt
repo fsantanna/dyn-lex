@@ -1,4 +1,4 @@
-package dceu
+package dlex
 
 class Static (outer: Expr.Do, val ups: Ups, val vars: Vars) {
     val unused: MutableSet<Expr.Dcl> = mutableSetOf()

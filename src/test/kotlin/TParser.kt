@@ -1,4 +1,4 @@
-import dceu.*
+import dlex.*
 import org.junit.Test
 
 class TParser {
