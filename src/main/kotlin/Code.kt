@@ -289,7 +289,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos) {
             is Expr.Nat -> {
                 val body = vars.nat_to_str[this]!!
                 when (this.tk_.tag) {
-                    null   -> body + assrc("((CEU_Value){ CEU_VALUE_NIL })")
+                    null   -> body + "\n" + assrc("((CEU_Value){ CEU_VALUE_NIL })")
                     ":ceu" -> assrc(body)
                     else -> {
                         val (TAG,Tag) = this.tk_.tag.drop(1).let {

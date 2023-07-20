@@ -2646,6 +2646,15 @@ class TExec {
         )
         assert(out == "10\n10\n") { out }
     }
+    @Test
+    fun native16_func() {
+        val out = all("""
+            val n = `:number 10`                ;; native 10 is converted to `dyn-lex` number
+            val x = `:ceu ${D}n`                ;; `x` is set to `dyn-lex` `n` as is
+            `printf("> %f\n", ${D}n.Number);`   ;; outputs `n` as a number
+        """)
+        assert(out == "> 10.000000\n") { out }
+    }
 
     // OPERATORS
 
@@ -2867,6 +2876,29 @@ class TExec {
         """
         )
         assert(out == "true\nnil\n") { out }
+    }
+
+    // string-to-tag
+
+    @Test
+    fun ff_04_string_to_tag() {
+        val out = all("""
+            pass :xyz
+            println(string-to-tag(":x"))
+            println(string-to-tag(":xyz"))
+            println(string-to-tag("xyz"))
+        """, true)
+        assert(out == "nil\n:xyz\nnil\n") { out }
+    }
+    @Test
+    fun ff_05_string_to_tag() {
+        val out = all("""
+            data :A = []
+            data :A.B = []
+            data :A.B.C = []
+            println(string-to-tag(":A"), string-to-tag(":A.B"), string-to-tag(":A.B.C"))
+        """, true)
+        assert(out == ":A\t:A.B\t:A.B.C\n") { out }
     }
 
     // TYPE
