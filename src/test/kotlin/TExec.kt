@@ -16,7 +16,7 @@ val THROW = false
 //val THROW = true
 
 fun all (inp: String, pre: Boolean=false): String {
-    val prelude = "build/cprelude.ceu"
+    val prelude = "build/prelude.ceu"
     val inps = listOf(Pair(Triple("anon",1,1), inp.reader())) + if (!pre) emptyList() else {
         listOf(Pair(Triple(prelude,1,1), File(prelude).reader()))
     }
