@@ -10,7 +10,7 @@
 
 # Manual
 
-- https://github.com/fsantanna/dlex/blob/main/doc/manual-out.md
+- https://github.com/fsantanna/dyn-lex/blob/main/doc/manual-out.md
 
 # Install
 
@@ -23,7 +23,7 @@ $ sudo apt install gcc default-jre
 2. Install `dlex`:
 
 ```
-$ wget https://github.com/fsantanna/dlex/releases/download/v0.0.0/install-v0.0.0.sh
+$ wget https://github.com/fsantanna/dyn-lex/releases/download/v0.0.0/install-v0.0.0.sh
 $ sh install-v0.0.0.sh ./dlex/
 ```
 
