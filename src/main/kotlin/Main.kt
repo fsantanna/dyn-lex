@@ -17,13 +17,14 @@ const val VERSION  = "v$MAJOR.$MINOR.$REVISION"
 val PATH = File(File(System.getProperty("java.class.path")).absolutePath).parent
 
 val KEYWORDS: SortedSet<String> = setOf (
-    "break", "data", "do", "drop", "else",
+    "and", "break", "data", "do", "drop", "else",
     "enum", "false", "func", "if", "loop",
-    "nil", "pass", "set",
+    "nil", "not", "or", "pass", "set",
     "true", "val", "var"
 ).toSortedSet()
 
 val OPERATORS = setOf('+', '-', '*', '/', '>', '<', '=', '!', '|', '&', '~', '%', '#', '@')
+val XOPERATORS = setOf("and", "not", "or")
 
 val TAGS = listOf (
     ":nil", ":error", ":tag", ":bool", ":char", ":number", ":pointer",

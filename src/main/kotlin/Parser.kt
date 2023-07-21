@@ -383,7 +383,16 @@ class Parser (lexer_: Lexer)
                         x
                     }
                     this.acceptFix_err(")")
-                    Expr.Call(e.tk, e, args)
+                    when {
+                        (e is Expr.Acc && e.tk.str in XOPERATORS) -> {
+                            when (args.size) {
+                                1 -> this.nest("${e.tostr(true)} ${args[0].tostr(true)}")
+                                2 -> this.nest("${args[0].tostr(true)} ${e.tostr(true)} ${args[1].tostr(true)}")
+                                else -> err(e.tk, "operation error : invalid number of arguments") as Expr
+                            }
+                        }
+                        else -> Expr.Call(e.tk, e, args)
+                    }
                 }
                 else -> error("impossible case")
             }
@@ -421,19 +430,15 @@ class Parser (lexer_: Lexer)
                 "or" -> this.nest("""
                     ${op.pos.pre()}do {
                         val :xtmp ceu_${e1.n} = ${e1.tostr(true)} 
-                        if ceu_${e1.n} => ceu_${e1.n} => ${e2.tostr(true)}
+                        if ceu_${e1.n} { ceu_${e1.n} } else { ${e2.tostr(true)} }
                     }
                 """)
                 "and" -> this.nest("""
                     ${op.pos.pre()}do {
                         val :xtmp ceu_${e1.n} = ${e1.tostr(true)} 
-                        if ceu_${e1.n} => ${e2.tostr(true)} => ceu_${e1.n}
+                        if ceu_${e1.n} { ${e2.tostr(true)} } else { ceu_${e1.n} }
                     }
                 """)
-                "is?" -> this.nest("is'(${e1.tostr(true)}, ${e2.tostr(true)})")
-                "is-not?" -> this.nest("is-not'(${e1.tostr(true)}, ${e2.tostr(true)})")
-                "in?" -> this.nest("in'(${e1.tostr(true)}, ${e2.tostr(true)})")
-                "in-not?" -> this.nest("in-not'(${e1.tostr(true)}, ${e2.tostr(true)})")
                 else -> {
                     val id = if (op.str[0] in OPERATORS) "{{${op.str}}}" else op.str
                     Expr.Call(op, Expr.Acc(Tk.Id(id,op.pos,0)), listOf(e1,e2))

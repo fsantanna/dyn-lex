@@ -1920,6 +1920,59 @@ class TExec {
         assert(out == "1\n") { out }
     }
 
+    // OPS: not, and, or
+
+    @Test
+    fun op_or_and() {
+        val out = all("""
+            println(true or println(1))
+            println(false and println(1))
+        """)
+        assert(out == "true\nfalse\n") { out }
+    }
+    @Test
+    fun op_not() {
+        val out = all("""
+            println(not nil and not false)
+        """)
+        assert(out == "true\n") { out }
+    }
+    @Test
+    fun op2_or_and() {
+        val out = all("""
+            println(1 or error(5))
+            println(1 and 2)
+            println(nil and 2)
+            println(nil or 2)
+        """)
+        assert(out == "1\n2\nnil\n2\n") { out }
+    }
+    @Test
+    fun op3_or_and() {
+        val out = all("""
+            println(true and ([] or []))
+        """)
+        assert(out == "[]\n") { out }
+    }
+    @Test
+    fun op4_and_and() {
+        val out = all("""
+            val v = true and
+                true and 10
+            println(v)
+        """)
+        assert(out == "10\n") { out }
+    }
+    @Test
+    fun op5_plus_plus() {
+        val out = all("""
+            val v = 5 +
+                5 + 10
+            println(v)
+        """, true)
+        assert(out == "20\n") { out }
+    }
+
     // FUNC / CALL
 
     @Test
