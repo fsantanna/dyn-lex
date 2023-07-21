@@ -912,6 +912,14 @@ class TExec {
         assert(out == "1\n") { out }
     }
     @Test
+    fun dict7_init() {
+        val out = all("""
+            var t = @[x=1, y=2]
+            println(t.x, t.y)
+        """)
+        assert(out == "1\t2\n") { out }
+    }
+    @Test
     fun dd_dict3() {
         val out = all(
             """
@@ -1980,7 +1988,8 @@ class TExec {
             println(x)
         """
         )
-        assert(out == "anon : (lin 4, col 13) : expected \"else\" : have \"println\"") { out }
+        //assert(out == "anon : (lin 4, col 13) : expected \"else\" : have \"println\"") { out }
+        assert(out == "1\n") { out }
     }
     @Test
     fun if2_err() {

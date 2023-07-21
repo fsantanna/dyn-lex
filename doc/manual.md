@@ -628,7 +628,8 @@ tuples, vectors, and dictionaries:
 Cons : `[´ [List(Expr)] `]´             ;; tuple
      | `#[´ [List(Expr)] `]´            ;; vector
      | `@[´ [List(Key-Val)] `]´         ;; dictionary
-            Key-Val : `(´ Expr `,´ Expr `)´
+            Key-Val : ID `=´ Expr
+                    | `(´ Expr `,´ Expr `)´
 ```
 
 Tuples (`[...]`) and vectors (`#[...]`) are built providing a list of
@@ -637,6 +638,8 @@ expressions.
 Dictionaries (`@[...]`) are built providing a list of pairs of expressions
 (`(key,val)`), in which each pair maps a key to a value.
 The first expression is the key, and the second is the value.
+If the key is a tag, the alternate syntax `tag=val` may be used (omitting the
+tag `:`).
 
 Examples:
 
@@ -1029,13 +1032,13 @@ x + 10 - 1      ;; ERR: requires parenthesis
 `dyn-lex` supports conditionals as follows:
 
 ```
-If  : `if´ Expr Block `else´ Block 
+If  : `if´ Expr Block [`else´ Block]
 ```
 
 An `if` tests a condition expression and executes one of the two possible
 branches.
 If the condition is [true](#basic-types), the `if` executes the first branch.
-Otherwise, it executes the `else` branch.
+Otherwise, it executes the optional `else` branch, which defaults to `nil`.
 
 Examples:
 

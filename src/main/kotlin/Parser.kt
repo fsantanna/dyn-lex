@@ -238,8 +238,11 @@ class Parser (lexer_: Lexer)
                 val tk0 = this.tk0 as Tk.Fix
                 val cnd = this.expr()
                 val t = this.block()
-                this.acceptFix_err("else")
-                val f = this.block()
+                val f = if (this.acceptFix("else")) {
+                    this.block()
+                } else {
+                    Expr.Do(tk0, listOf(Expr.Nil(Tk.Fix("nil", tk0.pos.copy()))))
+                }
                 Expr.If(tk0, cnd, t, f)
             }
             this.acceptFix("break") -> Expr.Break(this.tk0 as Tk.Fix)
@@ -318,9 +321,16 @@ class Parser (lexer_: Lexer)
             }
             this.acceptFix("@[")    -> Expr.Dict(this.tk0 as Tk.Fix, list0("]",",") {
                 val tk1 = this.tk1
-                this.acceptFix_err("(")
-                val k = this.expr()
-                this.acceptFix(",")
+                val k = if (this.acceptEnu("Id")) {
+                    val e = Expr.Tag(Tk.Tag(':' + tk1.str, tk1.pos))
+                    this.acceptFix_err("=")
+                    e
+                } else {
+                    this.acceptFix_err("(")
+                    val e = this.expr()
+                    this.acceptFix(",")
+                    e
+                }
                 val v = this.expr()
                 if (tk1 !is Tk.Id) {
                     this.acceptFix_err(")")
