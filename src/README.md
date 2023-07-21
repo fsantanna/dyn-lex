@@ -32,12 +32,12 @@ sudo apt install default-jdk
 
 ```
 $ cd dlex/
-$ make DIR=/tmp/dlex/    # (choose directory)
+$ make
 ```
 
 4. Use `dyn-lex`:
 
 ```
-$ /tmp/dlex/dlex build/hello-world.ceu
+$ ./dlex build/hello-world.ceu
 ```
 

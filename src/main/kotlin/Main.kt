@@ -17,9 +17,9 @@ const val VERSION  = "v$MAJOR.$MINOR.$REVISION"
 val PATH = File(File(System.getProperty("java.class.path")).absolutePath).parent
 
 val KEYWORDS: SortedSet<String> = setOf (
-    "and", "break", "data", "do", "drop", "else",
+    "break", "data", "do", "drop", "else",
     "enum", "false", "func", "if", "loop",
-    "nil", "not", "or", "pass", "set",
+    "nil", "pass", "set",
     "true", "val", "var"
 ).toSortedSet()
 

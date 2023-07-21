@@ -408,7 +408,10 @@ class Parser (lexer_: Lexer)
                 val op = this.tk0 as Tk.Op
                 val e = this.expr_2_pre()
                 //println(listOf(op,e))
-                Expr.Call(op, Expr.Acc(Tk.Id("{{${op.str}}}", op.pos, 0)), listOf(e))
+                when {
+                    (op.str == "not") -> this.nest("${op.pos.pre()}if ${e.tostr(true)} => false => true\n")
+                    else -> Expr.Call(op, Expr.Acc(Tk.Id("{{${op.str}}}", op.pos, 0)), listOf(e))
+                }
             }
             else -> this.expr_3_met()
         }
