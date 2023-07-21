@@ -70,7 +70,7 @@ fun String.id2c (): String {
             Pair('?', "_question_"),
             Pair('!', "_bang_"),
         )
-        this.toList().map { MAP[it] ?: it }.joinToString("")
+        "id_" + this.toList().map { MAP[it] ?: it }.joinToString("")
     }
 }
 
