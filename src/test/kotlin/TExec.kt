@@ -524,53 +524,6 @@ class TExec {
         assert(out == "anon : (lin 2, col 21) : block escape error : incompatible scopes\n") { out }
     }
     @Test
-    fun cc_tuple11_copy() {
-        val out = all(
-            """
-            val t1 = [1,2,3]
-            val t2 = copy(t1)
-            val t3 = t1
-            set t1[2] = 999
-            set t2[0] = 10
-            println(t1)
-            println(t2)
-            println(t3)
-        """, true
-        )
-        assert(out == "[1,2,999]\n[10,2,3]\n[1,2,999]\n") { out }
-    }
-    @Test
-    fun cc_tuple12_free_copy() {
-        val out = all(
-            """
-            var f
-            set f = func (v) {
-                ;;println(v)
-                if v > 0 {
-                    copy([f(v - 1)])
-                } else {
-                    0
-                }
-            }
-            println(f(3))
-        """, true
-        )
-        assert(out == "[[[0]]]\n") { out }
-    }
-    @Test
-    fun cc_tuple13_copy_out() {
-        val out = all(
-            """
-            val out = do {
-                val ins = [1,2,3]
-                copy(ins)
-            }
-            println(out)
-        """, true
-        )
-        assert(out == "[1,2,3]\n") { out }
-    }
-    @Test
     fun cc_tuple14_drop_out() {
         val out = all(
             """
@@ -663,61 +616,6 @@ class TExec {
         """, true
         )
         assert(out == "10\n") { out }
-    }
-    @Test
-    fun cc_tuple21_scope_copy() {
-        val out = all(
-            """
-            var x = [1,2,3]
-            do {
-                val y = copy(x)
-                do {
-                    set x = y
-                }
-            }
-            println(x)
-        """, true
-        )
-        assert(out == "anon : (lin 6, col 25) : set error : incompatible scopes\n" +
-                "") { out }
-    }
-    @Test
-    fun cc_tuple22_scope_copy() {
-        val out = all(
-            """
-            var x = [1,2,3]
-            do {
-                val y = copy(x)
-                do {
-                    set x = copy(y)
-                }
-            }
-            println(x)
-        """, true
-        )
-        assert(out == "[1,2,3]\n") { out }
-    }
-    @Test
-    fun cc_tuple23_scope_copy() {
-        val out = all(
-            """
-            var v
-            do {
-                var x = [1,2,3]
-                do {
-                    val y = copy(x)
-                    do {
-                        set x = copy(y)
-                        ;;`printf(">>> %d\n", ceu_mem->x.Dyn->Any.hld_type);`
-                        set v = x       ;; err
-                    }
-                }
-            }
-            println(v)
-        """, true
-        )
-        assert(out == "anon : (lin 10, col 29) : set error : incompatible scopes\n" +
-                "") { out }
     }
     @Test
     fun cc_24_tuple() {
@@ -953,23 +851,6 @@ class TExec {
         assert(out == "@[(:x,1),(:y,2)]\n") { out }
     }
     @Test
-    fun dd_dict6_copy() {
-        val out = all(
-            """
-            val t1 = @[]
-            set t1[:x] = 1
-            val t2 = t1
-            val t3 = copy(t1)
-            set t1[:y] = 2
-            set t3[:y] = 20
-            println(t1)
-            println(t2)
-            println(t3)
-        """
-        )
-        assert(out == "@[(:x,1),(:y,2)]\n@[(:x,1),(:y,2)]\n@[(:x,1),(:y,20)]\n") { out }
-    }
-    @Test
     fun dd_dict9_next() {
         val out = all(
             """
@@ -977,11 +858,11 @@ class TExec {
             set t[:x] = 1
             set t[:y] = 2
             var k
-            set k = next-dict(t)
+            set k = next(t)
             println(k, t[k])
-            set k = next-dict(t,k)
+            set k = next(t,k)
             println(k, t[k])
-            set k = next-dict(t,k)
+            set k = next(t,k)
             println(k, t[k])
         """
         )
@@ -1000,11 +881,11 @@ class TExec {
             set t[:a] = 10
             set t[:b] = 20
             set t[:c] = 30
-            var k = next-dict(t)
+            var k = next(t)
             loop {
                 if (k == nil) { break } else { nil }
                 println(k, t[k])
-                set k = next-dict(t,k)
+                set k = next(t,k)
             }
         """
         )
@@ -1147,34 +1028,6 @@ class TExec {
         """
         )
         assert(out == "anon : (lin 2, col 13) : invalid set : expected assignable destination") { out }
-    }
-    @Test
-    fun vector11_copy() {
-        val out = all(
-            """
-            val t1 = #[]
-            set t1[#t1] = 1
-            println(t1)
-        """, true
-        )
-        assert(out == "#[1]\n") { out }
-    }
-    @Test
-    fun vector12_copy() {
-        val out = all(
-            """
-            val t1 = #[]        ;; [1,2]
-            set t1[#t1] = 1
-            val t2 = t1         ;; [1,2]
-            val t3 = copy(t1)   ;; [1,20]
-            set t1[#t1] = 2
-            set t3[#t3] = 20
-            println(t1)
-            println(t2)
-            println(t3)
-        """, true
-        )
-        assert(out == "#[1,2]\n#[1,2]\n#[1,20]\n") { out }
     }
     @Test
     fun vector13_add() {
@@ -2001,7 +1854,7 @@ class TExec {
             println(x)
         """
         )
-        assert(out == "anon : (lin 5, col 13) : expected \"else\" : have \"println\"") { out }
+        assert(out == "nil\n") { out }
     }
     @Test
     fun if3_err() {
@@ -3135,17 +2988,6 @@ class TExec {
         )
         assert(out == "[:Z,:Y,:X]\n1\n") { out }
     }
-    @Test
-    fun tags15() {
-        val out = all(
-            """
-            val t = tags([], :x, true)
-            val s = copy(t)
-            println(s)
-        """
-        )
-        assert(out == ":x []\n") { out }
-    }
 
     // ENUM
 
@@ -3568,27 +3410,6 @@ class TExec {
             var g = do {
                 var t = [1]
                 drop(f(drop(t)))
-            }
-            println(g())
-        """
-        )
-        assert(out == "[1]\n") { out }
-    }
-    @Ignore
-    @Test
-    fun todo_clo24_copy() {
-        val out = all(
-            """
-            var f = func (^a) {
-                func () {
-                    ^^a
-                }
-            }
-            var g = do {
-                var t = [1]
-                var i = copy(f(t))
-                set t[0] = 10
-                drop(i)
             }
             println(g())
         """

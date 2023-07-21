@@ -15,39 +15,38 @@
         - `nil` `bool` `char` `number` `pointer` `tag`
     * Collections
         - `tuple` `vector` `dict`
-    * Execution Units
-        - `func` `coro` `task` `x-coro` `x-task` `x-tasks` `x-track`
+    * Functions
+        - `func`
     * User Types
 * VALUES
     * Literal Values
         - `nil` `bool` `tag` `number` `char` `pointer`
     * Dynamic Values
         - `tuple` `vector` `dict` `func` `coro` `task`
-    * Active Values
-        - `x-coro` `x-task` `x-tasks` `x-track`
 * STATEMENTS
     * Program, Sequences and Blocks
-        - `;` `do` `defer` `pass`
-    * Where and Thus Clauses
-        - `where` `thus`
+        - `;` `do` `drop` `pass`
     * Variables, Declarations and Assignments
-        - `val` `var` `set` `...` `err` `evt`
+        - `val` `var` `set` `...`
     * Tag Enumerations and Tuple Templates
         - `enum` `data`
     * Calls, Operations and Indexing
         - `f(...)` `x+y` `t[...]` `t.x`
     * Conditionals and Loops
-        - `if` `ifs` `loop` `loop if` `loop until` `loop in`
-    * Exceptions
-        - `throw` `catch`
-    * Coroutine Operations
-        - `coroutine` `yield` `resume` `toggle` `kill` `status` `spawn` `resume-yield-all`
-    * Task Operations
-        - `pub` `spawn` `await` `broadcast` `track` `detrack` `tasks` `spawn in`
-        - `loop in` `every` `spawn {}` `awaiting` `toggle {}` `par` `par-and` `par-or`
+        - `if` `loop`
 * STANDARD LIBRARY
-    * Primary Library
-    * Auxiliary Library
+    * Equality Operators
+        - `/=` `==`
+    * Logical Operators
+        - `not` `and` `or`
+    * Types and Tags
+        - `sup?` `tags` `type`
+    * Dictionary Next
+        - `next`
+    * Conversions
+        - `to-number` `to-string` `to-tag`
+    * Print
+        - `print` `println`
 * SYNTAX
 
 <!-- CONTENTS -->
@@ -66,8 +65,8 @@ This is valid not only for [collections](#constructors) (tuples, vectors, and
 dictionaries), but also for [closures](#prototypes).
 This restriction ensures that terminating blocks deallocate all memory at once.
 *More importantly, it provides static means to reason about the program.*
-To overcome this restriction, `dyn-lex` also provides an explicit
-[drop](#copy-and-drop) operation to deattach a dynamic value from its block.
+To overcome this restriction, `dyn-lex` also provides an explicit [drop](#drop)
+operation to deattach a dynamic value from its block.
 
 The next example illustrates lexical memory management and the validity of
 assignments:
@@ -238,6 +237,7 @@ The following keywords are reserved in `dyn-lex`:
 
 ```
     and                 ;; and operator                     (00)
+    break               ;; break loop
     data                ;; data declaration
     do                  ;; do block
     else                ;; else block
@@ -246,15 +246,15 @@ The following keywords are reserved in `dyn-lex`:
     func                ;; function prototype
     if                  ;; if block
     loop                ;; loop block
-    nil                 ;; nil value
-    not                 ;; not operator                     (10)
+    nil                 ;; nil value                        (10)
+    not                 ;; not operator
     or                  ;; or operator
     pass                ;; innocuous expression
     poly                ;; TODO
     set                 ;; assign expression
     true                ;; true value
     val                 ;; constant declaration
-    var                 ;; variable declaration             (17)
+    var                 ;; variable declaration             (18)
 ```
 
 ## Symbols
@@ -613,8 +613,8 @@ assignments or as return expressions.
 This restriction permits that terminating blocks deallocate all dynamic values
 attached to them.
 
-`dyn-lex` also provides an explicit [drop](#copy-and-drop) operation to
-reattach a dynamic value to an outer scope.
+`dyn-lex` also provides an explicit [drop](#drop) operation to reattach a
+dynamic value to an outer scope.
 
 Nevertheless, a dynamic value is still subject to garbage collection, given
 that it may loose all references to it, even with its enclosing block active.
@@ -718,7 +718,7 @@ A block delimits a lexical scope for variables and dynamic values:
 A variable is only visible to expressions in the block in which it was
 declared.
 A dynamic value cannot escape the block in which it was created (e.g., from
-assignments or returns), unless it is [dropped](#copy-and-drop) out.
+assignments or returns), unless it is [dropped](#drop) out.
 For this reason, when a block terminates, all memory that was allocated inside
 it is automatically reclaimed.
 This is also valid for active [coroutines](#active-values) and
@@ -758,6 +758,30 @@ do {
 do {
     val y = #[1,2,3]
     drop(y)             ;; OK: return dropped local vector
+}
+```
+
+### Drop
+
+```
+Drop : `drop´ `(´ Expr `)´
+```
+
+The `drop` operation [deattaches](#lexical-memory-management) the given value
+from its current [block](#blocks), allowing it to be reattached to an outer
+scope.
+A `drop` applies recursively to nested values.
+
+`TODO: lval, single ref`
+
+Examples:
+
+```
+val v = 10
+drop(v)             ;; --> 10 (innocuous drop)
+val u = do {
+    val t = [10]
+    drop(t)         ;; --> [10] (deattaches from `t`, reattaches to `u`)
 }
 ```
 
@@ -1076,16 +1100,15 @@ loop {       ;; --> 0,1,2,3,4
 
 # STANDARD LIBRARY
 
-## Primary Library
-
-The primary library provides functions and operations that are primitive in
+The standard library provides functions and operations that are primitive in
 the sense that they cannot be written in `dyn-lex` itself:
 
 - `/=`:             [Equality Operators](#equality-operators)
 - `==`:             [Equality Operators](#equality-operators)
-- `copy`:           [Copy and Drop](#copy-and-drop)
-- `drop`:           [Copy and Drop](#copy-and-drop)
+- `and`:            [Logical Operators](#boolean-operators)
 - `next`:           [Dictionary Next](#dictionary-next)
+- `not`:            [Logical Operators](#boolean-operators)
+- `or`:             [Logical Operators](#boolean-operators)
 - `print`:          [Print](#print)
 - `println`:        [Print](#print)
 - `sup?`:           [Types and Tags](#types-and-tags)
@@ -1095,7 +1118,7 @@ the sense that they cannot be written in `dyn-lex` itself:
 - `to-tag`:         [Conversions](#conversions)
 - `type`:           [Types and Tags](#types-and-tags)
 
-### Equality Operators
+## Equality Operators
 
 ```
 func {{==}} (v1, v2)  ;; --> yes/no
@@ -1124,168 +1147,7 @@ Examples:
 [1] == [1]      ;; --> false
 ```
 
-### Types and Tags
-
-```
-func type (v)           ;; --> :type
-func sup? (sup, sub)    ;; --> yes/no
-func string-to-tag (s)  ;; --> :tag
-func tags (v, t, set)   ;; --> v
-func tags (v, t)        ;; --> yes/no
-```
-
-The function `type` receives a value `v` and returns its [type](#types) as one
-of these tags:
-    `:nil`, `:bool`, `:char`, `:number`, `:pointer`, `:tag`,
-    `:tuple`, `:vector`, `:dict`,
-    `:func`.
-
-The function `sup?` receives a tag `sup`, a tag `sub`, and returns a boolean
-to answer if `sup` is a [super-tag](#hierarchical-tags) of `sub`.
-
-The function `tags` sets or queries tags associated with values of [non-basic
-types](#user-types).
-To set or unset a tag, the function receives a value `v`, a tag `t`, and a
-boolean `set` to set or unset the tag.
-The function returns the same value passed to it.
-To query a tag, the function receives a value `v`, a tag `t` to check, and
-returns a boolean to answer if the tag (or any sub-tag) is associated with the
-value.
-
-Examples:
-
-```
-type(10)                        ;; --> :number
-val x = tags([], :x, true)      ;; value x=[] is associated with tag :x
-tags(x, :x)                     ;; --> true
-```
-
-### Conversions
-
-```
-func to-number (v)  ;; --> number
-func to-string (v)  ;; --> "string"
-func to-tag (v)     ;; --> :tag
-```
-
-The conversion functions receive any value `v` and try to convert it to a value
-of the specified type.
-If the conversion is not possible, they return `nil`.
-
-Examples:
-
-```
-to-number("10")     ;; --> 10
-to-number([10])     ;; --> nil
-to-string(10)       ;; --> "10"
-to-tag(":number")   ;; --> :number
-```
-
-### Copy and Drop
-
-```
-func drop (v)   ;; --> v
-func copy (v)   ;; --> v'
-```
-
-The function `copy` makes a deep copy of the given value `v`.
-Only values of the [basic types](#basic-types) and [collections](#collections)
-are supported.
-
-The function `drop` makes a deep drop of the given value `v`.
-A drop [deattaches](#lexical-memory-management) the value from its current
-[block](#blocks), allowing it to be reattached to an outer scope.
-Only values of the [basic types](#basic-types) and [collections](#collections)
-are supported.
-
-Examples:
-
-```
-copy(10)            ;; --> 10
-copy(func() {})     ;; --> ERR: cannot copy function
-copy([1,[2],3])     ;; --> [1,[2],3]
-
-val v = 10
-drop(v)             ;; --> 10 (innocuous drop)
-
-val u = do {
-    val t = [10]
-    drop(t)         ;; --> [10] (deattaches from `t`, reattaches to `u`)
-}
-```
-
-### Dictionary Next
-
-```
-func next (d, k)
-```
-
-The function `next` allows to enumerate the keys of a dictionary.
-It receives a dictionary `d` and a key `k`, and returns the next key after `k`.
-If `k` is `nil`, the function returns the initial key.
-The function returns `nil` if there are no reamining keys to enumerate.
-
-### Print
-
-```
-func print (...)
-func println (...)
-```
-
-The functions `print` and `println` outputs the given values and return `nil`.
-
-Examples:
-
-```
-println(1, :x, [1,2,3])     ;; --> 1   :x   [1,2,3]
-sup? tags
-throw type
-```
-
-## Auxiliary Library
-
-- `:Iterator`:  [Iterator](#iterator)
-- `=/=`:        [Deep Equality Operators](#deep-equality-operators)
-- `===`:        [Deep Equality Operators](#deep-equality-operators)
-- `and`:        [Logical Operators](#boolean-operators)
-- `in?`:        [Operator In](#operator-in)
-- `in-not?`:    [Operator In](#operator-in)
-- `is?`:        [Operator Is](#operator-is)
-- `is-not?`:    [Operator Is](#operator-is)
-- `iter`:       [Iterator](#iterator)
-- `not`:        [Logical Operators](#boolean-operators)
-- `or`:         [Logical Operators](#boolean-operators)
-
-`TODO: many others`
-
-### Deep Equality Operators
-
-```
-func {===} (v1, v2)  ;; --> yes/no
-func {=/=} (v1, v2)  ;; --> yes/no
-```
-
-The operator `===` *deeply* compares two values `v1` and `v2` and returns a
-boolean.
-The operator `=/=` is the negation of `===`.
-
-Except for [collections](#collections), deep equality behaves the same as
-[equality](#equality-operators).
-To be considered deeply equal, collections must be of the same type, have the
-same [user tags](#user-types), and all indexes and values must be deeply equal.
-
-Examples:
-
-```
-1 === 1                 ;; --> true
-1 =/= 1                 ;; --> false
-1 === '1'               ;; --> false
-#[1] === #[1]           ;; --> true
-@[(:x,1),(:y,2)] =/=
-@[(:y,2),(:x,1)]        ;; --> false
-```
-
-### Logical Operators
+## Logical Operators
 
 ```
 func not (v)
@@ -1330,59 +1192,89 @@ nil or 10       ;; --> 10
 10 and nil      ;; --> nil
 ```
 
-### Operator In
+## Types and Tags
 
 ```
-func in? (v, vs)
-func in-not? (v, vs)
+func type (v)           ;; --> :type
+func sup? (sup, sub)    ;; --> yes/no
+func string-to-tag (s)  ;; --> :tag
+func tags (v, t, set)   ;; --> v
+func tags (v, t)        ;; --> yes/no
 ```
 
-The operators `in?` and `in-not?` are functions with a special syntax to be
-used as infix operators.
+The function `type` receives a value `v` and returns its [type](#types) as one
+of these tags:
+    `:nil`, `:bool`, `:char`, `:number`, `:pointer`, `:tag`,
+    `:tuple`, `:vector`, `:dict`,
+    `:func`.
 
-The operator `in?` checks if `v` is part of [collection](#collections) `vs`.
-For tuples and vectors, the values are checked.
-For dictionaries, the indexes are checked.
+The function `sup?` receives a tag `sup`, a tag `sub`, and returns a boolean
+to answer if `sup` is a [super-tag](#hierarchical-tags) of `sub`.
 
-The operator `in-not?` is the negation of `in?`.
+The function `tags` sets or queries tags associated with values of [non-basic
+types](#user-types).
+To set or unset a tag, the function receives a value `v`, a tag `t`, and a
+boolean `set` to set or unset the tag.
+The function returns the same value passed to it.
+To query a tag, the function receives a value `v`, a tag `t` to check, and
+returns a boolean to answer if the tag (or any sub-tag) is associated with the
+value.
 
 Examples:
 
 ```
-10 in? [1,10]            ;; true
-20 in? #[1,10]           ;; false
-10 in? @[(1,10)]         ;; false
+type(10)                        ;; --> :number
+val x = tags([], :x, true)      ;; value x=[] is associated with tag :x
+tags(x, :x)                     ;; --> true
 ```
 
-### Operator Is
+## Dictionary Next
 
 ```
-func is? (v1, v2)
-func is-not? (v1, v2)
+func next (d, k)
 ```
 
-The operators `is?` and `is-not?` are functions with a special syntax to be
-used as infix operators.
+The function `next` allows to enumerate the keys of a dictionary.
+It receives a dictionary `d` and a key `k`, and returns the next key after `k`.
+If `k` is `nil`, the function returns the initial key.
+The function returns `nil` if there are no reamining keys to enumerate.
 
-The operator `is?` checks if `v1` matches `v2` as follows:
+## Conversions
 
 ```
-ifs {
-    (v1 == v2)       -> true
-    (type(v1) == v2) -> true
-    tags(v1,v2)      -> true
-    else             -> false
-}
+func to-number (v)  ;; --> number
+func to-string (v)  ;; --> "string"
+func to-tag (v)     ;; --> :tag
 ```
 
-The operator `is-not?` is the negation of `is?`.
+The conversion functions receive any value `v` and try to convert it to a value
+of the specified type.
+If the conversion is not possible, they return `nil`.
 
 Examples:
 
 ```
-10 is? :number           -> true
-10 is? nil               -> false
-tags([],:x,true) is? :x  -> true
+to-number("10")     ;; --> 10
+to-number([10])     ;; --> nil
+to-string(10)       ;; --> "10"
+to-tag(":number")   ;; --> :number
+```
+
+## Print
+
+```
+func print (...)
+func println (...)
+```
+
+The functions `print` and `println` outputs the given values and return `nil`.
+
+Examples:
+
+```
+println(1, :x, [1,2,3])     ;; --> 1   :x   [1,2,3]
+sup? tags
+throw type
 ```
 
 # SYNTAX
@@ -1390,25 +1282,23 @@ tags([],:x,true) is? :x  -> true
 ```
 Prog  : { Expr [`;´] }
 Block : `{´ { Expr [`;´] } `}´
-Expr  : Expr' [`where´ Block | `thus´ [ID] Block]       ;; where/thus clauses
-Expr' : `do´ [:unnest[-hide]] Block                     ;; explicit block
-      | `defer´ Block                                   ;; defer statements
+Expr  : `do´ Block                                      ;; explicit block
       | `pass´ Expr                                     ;; innocuous expression
+      | `drop´ Expr                                     ;; drop expression
 
-      | `val´ ID [TAG] [`=´ [TAG] Expr]                 ;; declaration constant
-      | `var´ ID [TAG] [`=´ [TAG] Expr]                 ;; declaration variable
+      | `val´ ID [TAG] [`=´ Expr]                       ;; declaration constant
+      | `var´ ID [TAG] [`=´ Expr]                       ;; declaration variable
       | `set´ Expr `=´ Expr                             ;; assignment
 
       | `enum´ `{´ List(TAG [`=´ Expr]) `}´             ;; tags enum
       | `data´ Data                                     ;; tags templates
             Data : TAG `=´ `[´ List(ID [TAG]) `]´
-                    [`{´ { Data } `}´]
 
       | `nil´ | `false´ | `true´                        ;; literals &
-      | NAT | TAG | CHR | NUM | STR                     ;; identifiers
-      | ID | `err´ | `evt´ | `...´
+      | NAT | TAG | CHR | NUM | STR | ID | `...´        ;; identifiers
+     
 
-      | [TAG] `[´ [List(Expr)] `]´                      ;; tuple
+      | `[´ [List(Expr)] `]´                            ;; tuple
       | `#[´ [List(Expr)] `]´                           ;; vector
       | `@[´ [List(Key-Val)] `]´                        ;; dictionary
             Key-Val : ID `=´ Expr
@@ -1416,81 +1306,21 @@ Expr' : `do´ [:unnest[-hide]] Block                     ;; explicit block
 
       | `(´ Expr `)´                                    ;; parenthesis
       | Expr `(´ [List(Expr)] `)´                       ;; pos call
-      | Expr Lambda                                     ;; call lambda
 
       | OP Expr                                         ;; pre op
       | Expr OP Expr                                    ;; bin op
       | `not´ Expr                                      ;; op not
-      | Expr (`or´|`and´|`is?´|`is-not?´) Expr          ;; op bin
+      | Expr (`or´|`and´) Expr          ;; op bin
 
       | Expr `[´ Expr `]´                               ;; pos index
-      | Expr `.´ NUM                                    ;; op tuple index
       | Expr `.´ ID                                     ;; pos dict field
-      | Expr `.´ `pub´                                  ;; pos task pub
 
-      | Expr `[´ (`=´|`+´|`-´) `]´                      ;; ops peek,push,pop
-      | TAG Expr                                        ;; template cast
+      | `if´ Expr Block [`else´ Block]                  ;; conditional
 
-      | `if´ [ID [TAG] `=´] Expr (Block | `->´ Expr)    ;; conditional
-        [`else´  (Block | `->´ Expr)]
-
-      | `ifs´ [[ID [TAG] `=´] Expr] `{´ {Case} [Else] `}´ ;; conditionals
-            Case : OP Expr (Block | `->´ Expr)
-                 | [ID [TAG] `=´] Expr (Block | `->´ Expr)
-            Else : `else´ (`->´ Expr | Block)
-
-      | `loop´ [`in´ Iter [`,´ ID [TAG]]]  [Test] Block ;; loops
-            [{Test Block}] [Test]
-            Test : (`until´ | `while´) [ID [TAG] `=´] Expr
-            Iter : Expr                                     ;; generic
-                 | `:tasks´ Expr                            ;; tasks
-                 | (`[´ | `(´) Expr `->´ Expr (`]´ | `)´)   ;; numeric
-                    [`,´ :step (`-´|`+´) Expr]
-
-      | `catch´ Expr Block                              ;; catch exception
-      | `throw´ `(´ Expr `)´                            ;; throw exception
+      | `loop´ Block                                    ;; loop
+      | `break`                                         ;; loop break
 
       | `func´ `(´ [List(ID)] `)´ Block                 ;; function
-      | `coro´ `(´ [List(ID)] `)´ Block                 ;; coroutine
-      | `task´ `(´ [List(ID)] `)´ Block                 ;; task
-      | Lambda                                          ;; lambda function
-
-      | `func´ [`:pre´] ID `(´ [List(ID)] [`...´] `)´ Block ;; declaration func
-      | `coro´ [`:pre´] ID `(´ [List(ID)] [`...´] `)´ Block ;; declaration coro
-      | `task´ [`:pre´] ID `(´ [List(ID)] [`...´] `)´ Block ;; declaration task
-
-      | `coroutine´ `(´ Expr `)´                        ;; create coro
-      | `status´ `(´ Expr `)´                           ;; coro status
-      | `yield´ `(´ Expr `)´                            ;; yield from coro
-      | `resume´ Expr `(´ Expr `)´                      ;; resume coro
-      | `toggle´ Expr `(´ Expr `)´                      ;; toggle coro
-
-      | `broadcast´ [`in´ Expr `,´] Expr                ;; broadcast event
-      | `track´ `(´ Expr `)´                            ;; track task
-      | `detrack´ `(´ Expr `)´                          ;; detrack task
-      | `tasks´ `(´ Expr `)´                            ;; pool of tasks
-      | `spawn´ `in´ Expr `,´ Expr `(´ Expr `)´         ;; spawn task in pool
-
-      | `spawn´ Expr `(´ Expr `)´                       ;; spawn coro
-      | `spawn´ [`coro´] Block                          ;; spawn anonymous task/coro
-      | `await´ Await                                   ;; await event
-      | `resume-yield-all´ Expr `(´ Expr `)´            ;; resume-yield nested coro
-      | `every´ Await [Test] Block                      ;; await event in loop
-            [{Test Block}] [Test]
-      | `awaiting´ Await Block                          ;; abort on event
-      | `par´ Block { `with´ Block }                    ;; spawn tasks
-      | `par-and´ Block { `with´ Block }                ;; spawn tasks, rejoin on all
-      | `par-or´ Block { `with´ Block }                 ;; spawn tasks, rejoin on any
-      | `toggle´ Await `->´ Await Block                 ;; toggle task on/off on events
-
-Lambda : `\´ [List(ID)] Block                           ;; lambda function
-
-Await  : [`:check-now`] (                               ;; check before yield
-            | Expr                                      ;; await condition
-            | TAG `,´ Expr                              ;; await tag
-            | [Expr `:h´] [Expr `:min´] [Expr `:s´] [Expr `:ms´] ;; await time
-            | `spawn´ Expr `(´ Expr `)´                 ;; await task
-       )
 
 List(x) : x { `,´ x }                                   ;; comma-separated list
 

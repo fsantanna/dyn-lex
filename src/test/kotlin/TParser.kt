@@ -414,7 +414,9 @@ class TParser {
     fun expr_if2_err() {
         val l = lexer("if true { 1 }")
         val parser = Parser(l)
-        assert(trap { parser.expr_prim() } == "anon : (lin 1, col 14) : expected \"else\" : have end of file")
+        val e = parser.expr_prim()
+        assert(e is Expr.If)
+        //assert(trap { parser.expr_prim() } == "anon : (lin 1, col 14) : expected \"else\" : have end of file")
     }
 
     // DO
