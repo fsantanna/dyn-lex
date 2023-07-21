@@ -41,3 +41,11 @@ $ make
 $ ./dlex build/hello-world.ceu
 ```
 
+5. Use `dyn-lex` with SDL:
+
+```
+$ cd pico/
+$ git clone https://github.com/fsantanna/pico-sdl sdl/
+$ cd tst/
+$ ../../dlex --lib=pico all.ceu
+```
