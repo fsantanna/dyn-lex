@@ -1284,7 +1284,7 @@ Prog  : { Expr [`;´] }
 Block : `{´ { Expr [`;´] } `}´
 Expr  : `do´ Block                                      ;; explicit block
       | `pass´ Expr                                     ;; innocuous expression
-      | `drop´ Expr                                     ;; drop expression
+      | `drop´ `(´ Expr `)´                             ;; drop expression
 
       | `val´ ID [TAG] [`=´ Expr]                       ;; declaration constant
       | `var´ ID [TAG] [`=´ Expr]                       ;; declaration variable
