@@ -777,6 +777,35 @@ class TExec {
         )
         assert(out == "[]\n") { out }
     }
+    @Test
+    fun cc_09_drop_nest() {
+        val out = all(
+            """
+            val f = func (v) {
+                ;; consumes v
+                10
+            }
+            do {
+                val x = []
+                val y = f(drop(x))
+                println(x, y)
+            }
+        """
+        )
+        assert(out == "nil\t10\n") { out }
+    }
+    @Test
+    fun cc_10_drop_multi_err() {
+        val out = all("""
+            do {
+                val t1 = [1,2,3]
+                val t2 = t1
+                drop(t1)            ;; ERR: `t1` has multiple references
+                nil
+            }
+        """)
+        assert(out == "anon : (lin 5, col 22) : drop error : multiple references\n") { out }
+    }
 
     // DICT
 

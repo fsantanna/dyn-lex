@@ -26,8 +26,10 @@
 * STATEMENTS
     * Program, Sequences and Blocks
         - `;` `do` `drop` `pass`
-    * Variables, Declarations and Assignments
-        - `val` `var` `set` `...`
+    * Variables and Declarations
+        - `val` `var` `...`
+    * Assignments
+        - `set`
     * Tag Enumerations and Tuple Templates
         - `enum` `data`
     * Calls, Operations and Indexing
@@ -659,9 +661,8 @@ Func : `func´ [`(´ [List(ID)] [`...´] `)´] Block
 
 The keyword `func` is followed by a list of identifiers as parameters enclosed
 by parenthesis.
-The last parameter can be the symbol
-[`...`](#variables-declarations-and-assignments), which captures as a tuple all
-remaining arguments of a call.
+The last parameter can be the symbol [`...`](#variables-and-declarations),
+which captures as a tuple all remaining arguments of a call.
 
 The associated block executes when the unit is [invoked](#TODO).
 Each argument in the invocation is evaluated and copied to the parameter
@@ -674,7 +675,7 @@ but which the closure escapes and survives along with these variables, known as
 *upvalues*.
 Upvalues must be explicitly declared and accessed with the caret prefix (`^`),
 and cannot be modified (declarations must use the modifier
-[`val`](#variables-declarations-and-assignments))
+[`val`](#variables-and-declarations)).
 Finally, inside closures the accesses must be prefixed with double carets
 (`^^`).
 
@@ -708,8 +709,7 @@ Block : `{´ { Expr [`;´] } `}´
 Each expression in a sequence may be separated by an optional semicolon (`;´).
 A sequence of expressions evaluate to its last expression.
 
-The symbol
-[`...`](#variables-declarations-and-assignments) stores the program arguments
+The symbol [`...`](#variables-and-declarations) stores the program arguments
 as a tuple.
 
 ### Blocks
@@ -772,16 +772,30 @@ from its current [block](#blocks), allowing it to be reattached to an outer
 scope.
 A `drop` applies recursively to nested values.
 
-`TODO: lval, single ref`
+A `drop` only applies to [assignable expressions](#assignments), which are
+automatically set to `nil` once dropped.
+
+A `drop` only applies to values that have a single reference.
 
 Examples:
 
 ```
 val v = 10
 drop(v)             ;; --> 10 (innocuous drop)
+
 val u = do {
     val t = [10]
     drop(t)         ;; --> [10] (deattaches from `t`, reattaches to `u`)
+}
+
+val t = [1,2,3]
+f(drop(t))          ;; `f` releases `t`
+println(t)          ;; --> nil
+
+do {
+    val t1 = [1,2,3]
+    val t2 = t1
+    drop(t1)        ;; ERR: `t1` has multiple references
 }
 ```
 
@@ -804,7 +818,7 @@ do {
 }
 ```
 
-## Variables, Declarations and Assignments
+## Variables and Declarations
 
 Regardless of being dynamically typed, all variables in `dyn-lex` must be
 declared before use:
@@ -816,11 +830,7 @@ Args : `...´
 ```
 
 The difference between `val` and `var` is that a `val` is immutable, while a
-`var` declaration can be modified by further `set` statements:
-
-```
-Set : `set´ Expr `=´ Expr
-```
+`var` declaration can be modified by further `set` statements.
 
 The optional initialization expression assigns an initial value to the
 variable, which is set to `nil` otherwise.
@@ -848,16 +858,35 @@ arguments.
 Examples:
 
 ```
-var x
+val v = [10]            ;; OK
+set v = 0               ;; ERR: cannot reassign `v`
+set v[0] = 20           ;; OK
+
+data :Pos = [x,y]
+val pos1 :Pos = [10,20] ;; (assumes :Pos has fields [x,y])
+println(pos1.x)         ;; --> 10
+```
+
+## Assignments
+
+An assignments modifies the value of [variables](variables-and-declarations)
+and [indexes](indexes-and-fields):
+
+```
+Set : `set´ Expr `=´ Expr
+```
+
+Examples:
+
+```
+var x = 10
 set x = 20              ;; OK
 
 val y = [10]
 set y = 0               ;; ERR: cannot reassign `y`
 set y[0] = 20           ;; OK
 
-data :Pos = [x,y]
-val pos1 :Pos = [10,20] ;; (assumes :Pos has fields [x,y])
-println(pos1.x)         ;; --> 10
+set 10 = 29             ;; ERR: not variable or index
 ```
 
 ## Tag Enumerations and Tuple Templates
@@ -911,8 +940,8 @@ A template is surrounded by brackets (`[´ and `]´) to represent the tuple, and
 includes a list of identifiers, each mapping an index into a field.
 Each field can be followed by a tag to represent nested templates.
 
-Then, a [variable declaration](#variables-declarations-and-assignments) can
-specify a tuple template and hold a tuple that can be accessed by field.
+Then, a [variable declaration](#variables-and-declarations) can specify a tuple
+template and hold a tuple that can be accessed by field.
 
 Examples:
 
@@ -1006,7 +1035,7 @@ to `v[i]`.
 For a dictionary `v`, and a [tag literal](#literals) `k` (with the colon `:`
 omitted), the operation expands to `v[:k]`.
 
-A [variable](#variables-declarations-and-assignments) associated with a
+A [variable](#variables-and-declarations) associated with a
 [tuple template](#tag-enumerations-and-tuple-templates) can also be indexed
 using a field operation.
 

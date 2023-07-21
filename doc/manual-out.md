@@ -26,13 +26,15 @@
 - <a href="#statements">5.</a> STATEMENTS
     - <a href="#program-sequences-and-blocks">5.1.</a> Program, Sequences and Blocks
         - `;` `do` `drop` `pass`
-    - <a href="#variables-declarations-and-assignments">5.2.</a> Variables, Declarations and Assignments
-        - `val` `var` `set` `...`
-    - <a href="#tag-enumerations-and-tuple-templates">5.3.</a> Tag Enumerations and Tuple Templates
+    - <a href="#variables-and-declarations">5.2.</a> Variables and Declarations
+        - `val` `var` `...`
+    - <a href="#assignments">5.3.</a> Assignments
+        - `set`
+    - <a href="#tag-enumerations-and-tuple-templates">5.4.</a> Tag Enumerations and Tuple Templates
         - `enum` `data`
-    - <a href="#calls-operations-and-indexing">5.4.</a> Calls, Operations and Indexing
+    - <a href="#calls-operations-and-indexing">5.5.</a> Calls, Operations and Indexing
         - `f(...)` `x+y` `t[...]` `t.x`
-    - <a href="#conditionals-and-loops">5.5.</a> Conditionals and Loops
+    - <a href="#conditionals-and-loops">5.6.</a> Conditionals and Loops
         - `if` `loop`
 - <a href="#standard-library">6.</a> STANDARD LIBRARY
     - <a href="#equality-operators">6.1.</a> Equality Operators
@@ -705,9 +707,8 @@ Func : `func´ [`(´ [List(ID)] [`...´] `)´] Block
 
 The keyword `func` is followed by a list of identifiers as parameters enclosed
 by parenthesis.
-The last parameter can be the symbol
-[`...`](#variables-declarations-and-assignments), which captures as a tuple all
-remaining arguments of a call.
+The last parameter can be the symbol [`...`](#variables-and-declarations),
+which captures as a tuple all remaining arguments of a call.
 
 The associated block executes when the unit is [invoked](#TODO).
 Each argument in the invocation is evaluated and copied to the parameter
@@ -720,7 +721,7 @@ but which the closure escapes and survives along with these variables, known as
 *upvalues*.
 Upvalues must be explicitly declared and accessed with the caret prefix (`^`),
 and cannot be modified (declarations must use the modifier
-[`val`](#variables-declarations-and-assignments))
+[`val`](#variables-and-declarations)).
 Finally, inside closures the accesses must be prefixed with double carets
 (`^^`).
 
@@ -758,8 +759,7 @@ Block : `{´ { Expr [`;´] } `}´
 Each expression in a sequence may be separated by an optional semicolon (`;´).
 A sequence of expressions evaluate to its last expression.
 
-The symbol
-[`...`](#variables-declarations-and-assignments) stores the program arguments
+The symbol [`...`](#variables-and-declarations) stores the program arguments
 as a tuple.
 
 <a name="blocks"/>
@@ -826,16 +826,30 @@ from its current [block](#blocks), allowing it to be reattached to an outer
 scope.
 A `drop` applies recursively to nested values.
 
-`TODO: lval, single ref`
+A `drop` only applies to [assignable expressions](#assignments), which are
+automatically set to `nil` once dropped.
+
+A `drop` only applies to values that have a single reference.
 
 Examples:
 
 ```
 val v = 10
 drop(v)             ;; --> 10 (innocuous drop)
+
 val u = do {
     val t = [10]
     drop(t)         ;; --> [10] (deattaches from `t`, reattaches to `u`)
+}
+
+val t = [1,2,3]
+f(drop(t))          ;; `f` releases `t`
+println(t)          ;; --> nil
+
+do {
+    val t1 = [1,2,3]
+    val t2 = t1
+    drop(t1)        ;; ERR: `t1` has multiple references
 }
 ```
 
@@ -860,9 +874,9 @@ do {
 }
 ```
 
-<a name="variables-declarations-and-assignments"/>
+<a name="variables-and-declarations"/>
 
-## 5.2. Variables, Declarations and Assignments
+## 5.2. Variables and Declarations
 
 Regardless of being dynamically typed, all variables in `dyn-lex` must be
 declared before use:
@@ -874,11 +888,7 @@ Args : `...´
 ```
 
 The difference between `val` and `var` is that a `val` is immutable, while a
-`var` declaration can be modified by further `set` statements:
-
-```
-Set : `set´ Expr `=´ Expr
-```
+`var` declaration can be modified by further `set` statements.
 
 The optional initialization expression assigns an initial value to the
 variable, which is set to `nil` otherwise.
@@ -906,21 +916,42 @@ arguments.
 Examples:
 
 ```
-var x
-set x = 20              ;; OK
-
-val y = [10]
-set y = 0               ;; ERR: cannot reassign `y`
-set y[0] = 20           ;; OK
+val v = [10]            ;; OK
+set v = 0               ;; ERR: cannot reassign `v`
+set v[0] = 20           ;; OK
 
 data :Pos = [x,y]
 val pos1 :Pos = [10,20] ;; (assumes :Pos has fields [x,y])
 println(pos1.x)         ;; --> 10
 ```
 
+<a name="assignments"/>
+
+## 5.3. Assignments
+
+An assignments modifies the value of [variables](variables-and-declarations)
+and [indexes](indexes-and-fields):
+
+```
+Set : `set´ Expr `=´ Expr
+```
+
+Examples:
+
+```
+var x = 10
+set x = 20              ;; OK
+
+val y = [10]
+set y = 0               ;; ERR: cannot reassign `y`
+set y[0] = 20           ;; OK
+
+set 10 = 29             ;; ERR: not variable or index
+```
+
 <a name="tag-enumerations-and-tuple-templates"/>
 
-## 5.3. Tag Enumerations and Tuple Templates
+## 5.4. Tag Enumerations and Tuple Templates
 
 Tags are global identifiers that need not to be predeclared.
 However, they may be explicitly declared when used as enumerations or tuple
@@ -928,7 +959,7 @@ templates.
 
 <a name="tag-enumerations"/>
 
-### 5.3.1. Tag Enumerations
+### 5.4.1. Tag Enumerations
 
 An `enum` groups related tags in sequence so that they are associated with
 numbers in the same order:
@@ -960,7 +991,7 @@ if lib-key-pressed() == :Key-Up {
 
 <a name="tuple-templates"/>
 
-### 5.3.2. Tuple Templates
+### 5.4.2. Tuple Templates
 
 A `data` declaration associates a tag with a tuple template, which associates
 tuple positions with field identifiers:
@@ -975,8 +1006,8 @@ A template is surrounded by brackets (`[´ and `]´) to represent the tuple, and
 includes a list of identifiers, each mapping an index into a field.
 Each field can be followed by a tag to represent nested templates.
 
-Then, a [variable declaration](#variables-declarations-and-assignments) can
-specify a tuple template and hold a tuple that can be accessed by field.
+Then, a [variable declaration](#variables-and-declarations) can specify a tuple
+template and hold a tuple that can be accessed by field.
 
 Examples:
 
@@ -1012,11 +1043,11 @@ println(evt.ts, but.pos.y)          ;; --> 0, 20
 
 <a name="calls-operations-and-indexing"/>
 
-## 5.4. Calls, Operations and Indexing
+## 5.5. Calls, Operations and Indexing
 
 <a name="calls-and-operations"/>
 
-### 5.4.1. Calls and Operations
+### 5.5.1. Calls and Operations
 
 In `dyn-lex`, calls and operations are equivalent, i.e., an operation is a call
 that uses an [operator](#operatos) with prefix or infix notation:
@@ -1050,7 +1081,7 @@ f(10,20)        ;; normal call
 
 <a name="indexes-and-fields"/>
 
-### 5.4.2. Indexes and Fields
+### 5.5.2. Indexes and Fields
 
 [Collections](#collections) in `dyn-lex` (tuples, vectors, and dictionaries)
 are accessed through indexes or fields:
@@ -1076,7 +1107,7 @@ to `v[i]`.
 For a dictionary `v`, and a [tag literal](#literals) `k` (with the colon `:`
 omitted), the operation expands to `v[:k]`.
 
-A [variable](#variables-declarations-and-assignments) associated with a
+A [variable](#variables-and-declarations) associated with a
 [tuple template](#tag-enumerations-and-tuple-templates) can also be indexed
 using a field operation.
 
@@ -1093,7 +1124,7 @@ t.x
 
 <a name="precedence-and-associativity"/>
 
-### 5.4.3. Precedence and Associativity
+### 5.5.3. Precedence and Associativity
 
 `TODO`
 
@@ -1123,11 +1154,11 @@ x + 10 - 1      ;; ERR: requires parenthesis
 
 <a name="conditionals-and-loops"/>
 
-## 5.5. Conditionals and Loops
+## 5.6. Conditionals and Loops
 
 <a name="conditionals"/>
 
-### 5.5.1. Conditionals
+### 5.6.1. Conditionals
 
 `dyn-lex` supports conditionals as follows:
 
@@ -1148,7 +1179,7 @@ val v = if x>0 { x } else { -x }
 
 <a name="loops"/>
 
-### 5.5.2. Loops
+### 5.6.2. Loops
 
 `dyn-lex` supports loops as follows:
 
@@ -1378,7 +1409,7 @@ Prog  : { Expr [`;´] }
 Block : `{´ { Expr [`;´] } `}´
 Expr  : `do´ Block                                      ;; explicit block
       | `pass´ Expr                                     ;; innocuous expression
-      | `drop´ Expr                                     ;; drop expression
+      | `drop´ `(´ Expr `)´                             ;; drop expression
 
       | `val´ ID [TAG] [`=´ Expr]                       ;; declaration constant
       | `var´ ID [TAG] [`=´ Expr]                       ;; declaration variable
