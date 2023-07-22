@@ -1955,6 +1955,17 @@ class TExec {
         assert(out == "[]\n") { out }
     }
     @Test
+    fun xop3_or_and() {
+        val out = all("""
+            val v = do {
+                val :tmp x = []
+                if x { x } else { [] }
+            }
+            println(v)
+        """)
+        assert(out == "[]\n") { out }
+    }
+    @Test
     fun op4_and_and() {
         val out = all("""
             val v = true and
@@ -3041,7 +3052,7 @@ class TExec {
             println(tags(s,:T), tags(s,:T.S))
         """, true
         )
-        assert(out == "16\t272\ntrue\tfalse\ntrue\ttrue\n") { out }
+        assert(out == "15\t271\ntrue\tfalse\ntrue\ttrue\n") { out }
     }
     @Test
     fun tags12() {
@@ -3120,7 +3131,7 @@ class TExec {
             )
         """, true
         )
-        assert(out == "16\t1000\t1001\t1002\t10\t11\t12\t17\t100\t101\t18\n") { out }
+        assert(out == "15\t1000\t1001\t1002\t10\t11\t12\t16\t100\t101\t17\n") { out }
     }
     @Test
     fun enum02() {

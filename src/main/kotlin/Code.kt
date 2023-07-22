@@ -27,15 +27,6 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos) {
         }
     }
 
-    fun Expr.tmp_hold (tmp: Boolean?): String {
-        return when {
-            (tmp == null) -> "CEU_HOLD_MUTABLE"
-            (tmp == true) -> "CEU_HOLD_FLEETING"
-            (ups.first(this){ it is Expr.Proto } != null) -> "CEU_HOLD_FLEETING"
-            else -> "CEU_HOLD_MUTABLE"
-        }
-
-    }
     fun Expr.code(): String {
         if (this.isdst()) {
             assert(this is Expr.Acc || this is Expr.Index)
@@ -238,7 +229,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos) {
                 """
                 ${(this.init && this.src!=null && !unused).cond {
                     this.src!!.code() + """
-                        assert(ceu_hold_chk_set(&$bupc->dyns, $bupc->depth, ${this.tmp_hold(this.tmp)}, ceu_acc));
+                        assert(ceu_hold_chk_set(&$bupc->dyns, $bupc->depth, ${if (this.tmp) "CEU_HOLD_FLEETING" else "CEU_HOLD_MUTABLE"}, ceu_acc));
                     """
                 }}
                 ${if (id == "_") "" else {
@@ -314,7 +305,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos) {
                         }
                         """
                         { // ACC - SET
-                            if (!ceu_hold_chk_set(&${_idc_}->dyns, ${_idc_}->depth, ${this.tmp_hold(dcl.tmp)}, $src)) {
+                            if (!ceu_hold_chk_set(&${_idc_}->dyns, ${_idc_}->depth, ${if (dcl.tmp) "CEU_HOLD_FLEETING" else "CEU_HOLD_MUTABLE"}, $src)) {
                                 ceu_error1($bupc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : set error : incompatible scopes");
                             }
                             ceu_gc_inc($src);

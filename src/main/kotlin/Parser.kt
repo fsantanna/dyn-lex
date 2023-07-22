@@ -200,17 +200,13 @@ class Parser (lexer_: Lexer)
             this.acceptFix("do") -> Expr.Do(this.tk0, this.block().es)
             this.acceptFix("val") || this.acceptFix("var") -> {
                 val tk0 = this.tk0 as Tk.Fix
-                val tmp = when {
-                    this.acceptTag(":tmp")  -> true
-                    this.acceptTag(":xtmp") -> false
-                    else                        -> null
-                }
+                val tmp = this.acceptTag(":tmp")
                 this.acceptEnu_err("Id")
                 val id = this.tk0 as Tk.Id
                 if (id.str == "...") {
                     err(this.tk0, "invalid declaration : unexpected ...")
                 }
-                if (tmp!=null && tk0.str!="val") {
+                if (tmp && tk0.str!="val") {
                     err(this.tk0, "invalid declaration : expected \"val\" for \":tmp\"")
                 }
                 val tag = if (!this.acceptEnu("Tag")) null else {
@@ -439,13 +435,13 @@ class Parser (lexer_: Lexer)
             when (op.str) {
                 "or" -> this.nest("""
                     ${op.pos.pre()}do {
-                        val :xtmp ceu_${e1.n} = ${e1.tostr(true)} 
+                        val :tmp ceu_${e1.n} = ${e1.tostr(true)} 
                         if ceu_${e1.n} { ceu_${e1.n} } else { ${e2.tostr(true)} }
                     }
                 """)
                 "and" -> this.nest("""
                     ${op.pos.pre()}do {
-                        val :xtmp ceu_${e1.n} = ${e1.tostr(true)} 
+                        val :tmp ceu_${e1.n} = ${e1.tostr(true)} 
                         if ceu_${e1.n} { ${e2.tostr(true)} } else { ceu_${e1.n} }
                     }
                 """)
