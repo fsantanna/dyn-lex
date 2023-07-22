@@ -36,7 +36,7 @@ class Static (outer: Expr.Do, val ups: Ups, val vars: Vars) {
                 }
                 this.body.traverse()
             }
-            is Expr.Break -> {}
+            is Expr.Break  -> this.e.traverse()
             is Expr.Enum   -> {}
             is Expr.Data   -> {}
             is Expr.Pass   -> this.e.traverse()

@@ -280,7 +280,10 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos) {
                     ${this.body.code()}
                 }
                 """
-            is Expr.Break -> "break;"
+            is Expr.Break -> """
+                ${this.e.code()}
+                break;
+            """
             is Expr.Enum -> ""
             is Expr.Data -> ""
             is Expr.Pass -> "// PASS | ${this.dump()}\n" + this.e.code()

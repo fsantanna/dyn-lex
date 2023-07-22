@@ -2381,11 +2381,26 @@ class TExec {
     fun loop3() {
         val out = all(
             """
-            val v = loop {if (10) { break } else { nil }}
+            val v = loop {if (10) { break(10) } else { nil }}
             println(v)
         """
         )
         assert(out == "10\n") { out }
+    }
+    @Test
+    fun loop4() {
+        val out = all(
+            """
+            val v1 = loop {
+                break(10)
+            }
+            val v2 = loop {
+                break
+            }
+            println(v1, v2)
+        """
+        )
+        assert(out == "10\tnil\n") { out }
     }
 
     // NATIVE
