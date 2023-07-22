@@ -1052,10 +1052,8 @@ t.x
 
 ### Precedence and Associativity
 
-`TODO`
-
-Operations in `dyn-lex` can be combined in complex expressions with the following
-precedence priority (from higher to lower):
+Operations in `dyn-lex` can be combined in complex expressions with the
+following precedence priority (from higher to lower):
 
 ```
 1. sufix  operations       ;; t[0], x.i, f(x)
@@ -1063,8 +1061,8 @@ precedence priority (from higher to lower):
 3. binary operations       ;; x + y
 ```
 
-Currently, binary operators in `dyn-lex` have no precedence or associativity rules,
-requiring parenthesis for disambiguation:
+All binary operators are left-associative and have the same precedence.
+Expressions with multiple operators require parenthesis for disambiguation:
 
 ```
 Parens : `(´ Expr `)´
@@ -1076,6 +1074,7 @@ Examples:
 #f(10).x        ;; # ((f(10)) .x)
 x + 10 - 1      ;; ERR: requires parenthesis
 - x + y         ;; (-x) + y
+x or y or z     ;; (x or y) or z
 ```
 
 ## Conditionals and Loops
