@@ -227,9 +227,12 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos) {
                 }
 
                 """
+                // DCL | ${this.dump()}
                 ${(this.init && this.src!=null && !unused).cond {
                     this.src!!.code() + """
-                        assert(ceu_hold_chk_set(&$bupc->dyns, $bupc->depth, ${if (this.tmp) "CEU_HOLD_FLEETING" else "CEU_HOLD_MUTABLE"}, ceu_acc));
+                        if (!ceu_hold_chk_set(&$bupc->dyns, $bupc->depth, ${if (this.tmp) "CEU_HOLD_FLEETING" else "CEU_HOLD_MUTABLE"}, ceu_acc)) {
+                            ceu_error1($bupc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : set error : incompatible scopes");
+                        }
                     """
                 }}
                 ${if (id == "_") "" else {

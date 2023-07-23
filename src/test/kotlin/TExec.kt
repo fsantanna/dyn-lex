@@ -109,6 +109,7 @@ class TExec {
             do {
                 var g
                 set g = f
+                nil
             }
             println(f)
         """
@@ -716,8 +717,8 @@ class TExec {
             println(f(1,2,3))
         """
         )
-        //assert(out == "[[1,2,3]]\n") { out }
-        assert(out == "anon : (lin 4, col 22) : drop error : multiple references\n") { out }
+        assert(out == "[[1,2,3]]\n") { out }
+        //assert(out == "anon : (lin 4, col 22) : drop error : multiple references\n") { out }
     }
     @Test
     fun cm_04() {
@@ -797,14 +798,44 @@ class TExec {
     @Test
     fun cc_10_drop_multi_err() {
         val out = all("""
-            do {
+            val x = do {
                 val t1 = [1,2,3]
                 val t2 = t1
                 drop(t1)            ;; ERR: `t1` has multiple references
-                nil
+            }
+            println(x)
+        """)
+        //assert(out == "anon : (lin 5, col 22) : drop error : multiple references\n") { out }
+        assert(out == "[1,2,3]\n") { out }
+    }
+    @Test
+    fun cc_11_drop_deep() {
+        val out = all("""
+            do {
+                val t1 = [1]
+                do {
+                    val t2 = drop(t1)
+                    println(t2)
+                }
+                println(t1)
             }
         """)
-        assert(out == "anon : (lin 5, col 22) : drop error : multiple references\n") { out }
+        assert(out == "[1]\nnil\n") { out }
+    }
+    @Test
+    fun cc_12_drop_deep() {
+        val out = all("""
+            do {
+                val t1 = [1]
+                val t2 = t1
+                do {
+                    val t3 = drop(t1)
+                    println(t2)
+                }
+                println(t1)
+            }
+        """)
+        assert(out == "anon : (lin 6, col 21) : set error : incompatible scopes\n") { out }
     }
 
     // DICT
@@ -2412,6 +2443,14 @@ class TExec {
         """
         )
         assert(out == "10\tnil\n") { out }
+    }
+    @Test
+    fun loop5() {
+        val out = all("""
+            val x = 10
+            println(loop { break(x) })
+        """)
+        assert(out == "10\n") { out }
     }
 
     // NATIVE
@@ -4137,4 +4176,24 @@ class TExec {
         assert(out == "1\t'a'\n") { out }
     }
     */
+
+    // ALL
+    @Test
+    fun zz_01_sum() {
+        val out = all("""
+            var sum = func (n) {                                                            
+                var i = n                                                                   
+                var s = 0                                                                   
+                loop {                                                                      
+                    if i == 0 {                                                             
+                        break(s)                                                            
+                    }                                                                       
+                    set s = s + i                                                           
+                    set i = i - 1                                                           
+                }                                                                           
+            }                                                                               
+            println(sum(5))                                                                
+        """, true)
+        assert(out == "15\n") { out }
+    }
 }
