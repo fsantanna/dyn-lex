@@ -837,6 +837,21 @@ class TExec {
         """)
         assert(out == "anon : (lin 6, col 21) : set error : incompatible scopes\n") { out }
     }
+    @Test
+    fun cc_13_drop_cycle() {
+        val out = all(
+            """
+            val z = do {
+                var x = [nil]
+                var y = [x]
+                set x[0] = y
+                drop(x)
+            }
+            println(z[0][0] == z)
+        """
+        )
+        assert(out == "true\n") { out }
+    }
 
     // DICT
 
@@ -1865,7 +1880,9 @@ class TExec {
             """
             val f = func (t) {
                 val x = []
+                ;;dump(t)
                 set t[0] = x
+                ;;dump(t)
                 t
             }
             println(f([nil]))
@@ -3394,9 +3411,11 @@ class TExec {
             """
             var f
             set f = func (^x) {
-                func (y) {
+                ;;;val :tmp z =;;; func (y) {
                     [^^x,y]
                 }
+                ;;dump(z)
+                ;;z
             }
             println(f([10])(20))
         """

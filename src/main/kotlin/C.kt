@@ -602,18 +602,30 @@ fun Coder.main (tags: Tags): String {
                 return 1;
             } else if (src.Dyn->Any.hld_type<=CEU_HOLD_COLLECTION && src.Dyn->Any.refs>0 && depth>src.Dyn->Any.hld_depth) {
                 return 0;   // cant move to deeper scope with pending refs
-            } else if (src.Dyn->Any.hld_type==CEU_HOLD_FLEETING || src.Dyn->Any.hld_type==CEU_HOLD_COLLECTION) {
+            } else if (src.Dyn->Any.hld_type == CEU_HOLD_FLEETING) {
                 // continue below
+            //} else if (src.Dyn->Any.hld_type == CEU_HOLD_COLLECTION) {
+            //    // continue below
             } else if (depth >= src.Dyn->Any.hld_depth) {
-                return 1;
+                if (src.Dyn->Any.hld_type == CEU_HOLD_COLLECTION) {
+                    // continue below
+                } else {
+                    return 1;
+                }
             } else {
+        //printf(">>> %d\n", src.Dyn->Any.hld_type);
                 return 0;
             };
+            //printf(">>> %d %d -> %d\n", depth, src.Dyn->Any.hld_depth, src.Dyn->);
 
             src.Dyn->Any.hld_type = MAX(src.Dyn->Any.hld_type,tphold);
             if (depth != src.Dyn->Any.hld_depth) {
                 ceu_hold_chg(src.Dyn, dst, depth);
             }
+            if (depth >= src.Dyn->Any.hld_depth) {
+                return 1;
+            }
+
             switch (src.Dyn->Any.type) {
                 case CEU_VALUE_CLOSURE:
                     for (int i=0; i<src.Dyn->Closure.upvs.its; i++) {
@@ -690,6 +702,8 @@ fun Coder.main (tags: Tags): String {
             if (src.type < CEU_VALUE_DYNAMIC) {
                 return (CEU_Value) { CEU_VALUE_NIL };
             } else if (dyn->Any.hld_depth == 1) {
+                return (CEU_Value) { CEU_VALUE_NIL };
+            } else if (dyn->Any.hld_type <= CEU_HOLD_COLLECTION) {
                 return (CEU_Value) { CEU_VALUE_NIL };
             }
             
