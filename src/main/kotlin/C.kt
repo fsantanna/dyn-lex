@@ -619,10 +619,11 @@ fun Coder.main (tags: Tags): String {
             //printf(">>> %d %d -> %d\n", depth, src.Dyn->Any.hld_depth, src.Dyn->);
 
             src.Dyn->Any.hld_type = MAX(src.Dyn->Any.hld_type,tphold);
+            int src_depth = src.Dyn->Any.hld_depth;
             if (depth != src.Dyn->Any.hld_depth) {
                 ceu_hold_chg(src.Dyn, dst, depth);
             }
-            if (depth >= src.Dyn->Any.hld_depth) {
+            if (depth >= src_depth) {
                 return 1;
             }
 

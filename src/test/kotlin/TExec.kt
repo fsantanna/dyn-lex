@@ -852,6 +852,22 @@ class TExec {
         )
         assert(out == "true\n") { out }
     }
+    @Test
+    fun cc_14_drop_cycle() {
+        val out = all(
+            """
+            val z = do {
+                var x = [nil]
+                var y = [x]
+                set x[0] = y
+                drop(x)
+                y
+            }
+            println(z[0][0] == z)
+        """
+        )
+        assert(out == "true\n") { out }
+    }
 
     // DICT
 
