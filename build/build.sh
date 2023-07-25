@@ -14,7 +14,7 @@
 #   - title  = <version>
 #   - Attach = { .zip, install.sh }
 
-VER=v0.0.0
+VER=v0.1.0
 DIR=/tmp/dlex-build/
 
 rm -Rf $DIR
