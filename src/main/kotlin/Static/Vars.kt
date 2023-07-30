@@ -235,7 +235,6 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
                                 err(tk, "native error : (lin $l, col $c) : invalid identifier")
                             }
                             val dcl = find(this, id, 0)
-                            val blk = dcl_to_blk[dcl]!!
                             val (idx,_) = id2c(dcl, 0)
                             "($idx)$no"
                         }

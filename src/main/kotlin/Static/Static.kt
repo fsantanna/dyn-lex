@@ -2,6 +2,7 @@ package dlex
 
 class Static (outer: Expr.Do, val ups: Ups, val vars: Vars) {
     val unused: MutableSet<Expr.Dcl> = mutableSetOf()
+    val cons: MutableSet<Expr.Do> = mutableSetOf() // block has at least 1 constructor
 
     init {
         outer.traverse()
@@ -9,7 +10,10 @@ class Static (outer: Expr.Do, val ups: Ups, val vars: Vars) {
 
     fun Expr.traverse () {
         when (this) {
-            is Expr.Proto  -> this.body.traverse()
+            is Expr.Proto  -> {
+                cons.add(ups.first_block(this)!!)
+                this.body.traverse()
+            }
             is Expr.Do     -> this.es.forEach { it.traverse() }
             is Expr.Dcl    -> {
                 unused.add(this)
@@ -27,7 +31,6 @@ class Static (outer: Expr.Do, val ups: Ups, val vars: Vars) {
             }
             is Expr.If     -> { this.cnd.traverse() ; this.t.traverse() ; this.f.traverse() }
             is Expr.Loop   -> {
-                val up = ups.pub[this]
                 this.body.es.last().let {
                     if (it.is_innocuous()) {
                         //err(it.tk, "invalid expression : innocuous expression")
@@ -55,9 +58,18 @@ class Static (outer: Expr.Do, val ups: Ups, val vars: Vars) {
             is Expr.Bool   -> {}
             is Expr.Char   -> {}
             is Expr.Num    -> {}
-            is Expr.Tuple  -> this.args.forEach{ it.traverse() }
-            is Expr.Vector -> this.args.forEach{ it.traverse() }
-            is Expr.Dict   -> this.args.forEach { it.first.traverse() ; it.second.traverse() }
+            is Expr.Tuple  -> {
+                cons.add(ups.first_block(this)!!)
+                this.args.forEach{ it.traverse() }
+            }
+            is Expr.Vector -> {
+                cons.add(ups.first_block(this)!!)
+                this.args.forEach{ it.traverse() }
+            }
+            is Expr.Dict   -> {
+                cons.add(ups.first_block(this)!!)
+                this.args.forEach { it.first.traverse() ; it.second.traverse() }
+            }
             is Expr.Index  -> {
                 this.col.traverse()
                 this.idx.traverse()

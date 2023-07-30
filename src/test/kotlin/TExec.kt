@@ -39,7 +39,7 @@ fun all (inp: String, pre: Boolean=false): String {
         val vars  = Vars(outer, ups)
         val clos  = Clos(outer, ups, vars)
         val sta   = Static(outer, ups, vars)
-        val coder = Coder(outer, ups, vars, clos)
+        val coder = Coder(outer, ups, vars, clos, sta)
         coder.main(tags)
     } catch (e: Throwable) {
         if (THROW) {
@@ -1712,6 +1712,22 @@ class TExec {
         assert(out == ":ok\n") { out }
     }
     @Test
+    fun scope19x_tup() {
+        val out = all(
+            """
+            do {
+                val t1 = []
+                do {
+                    val t2 = []
+                    [t1,[],t2]
+                }
+            }
+            println(:ok)
+        """
+        )
+        assert(out == "anon : (lin 4, col 17) : block escape error : incompatible scopes\n") { out }
+    }
+    @Test
     fun scope19_leak() {
         val out = all(
             """
@@ -1889,6 +1905,50 @@ class TExec {
         """
         )
         assert(out == "[[1],[2]]\n") { out }
+    }
+    @Test
+    fun scope26y_args() {
+        val out = all(
+            """
+            val f = func (v) {
+                [v, [2]]
+            }
+            val v = [1]
+            val x = f(v)
+            println(x)
+        """
+        )
+        assert(out == "[[1],[2]]\n") { out }
+    }
+    @Test
+    fun scope26z_args() {
+        val out = all(
+            """
+            val v = [1]
+            val x = do {
+                [v, [2]]
+            }
+            println(x)
+        """
+        )
+        assert(out == "[[1],[2]]\n") { out }
+    }
+    @Test
+    fun scope26x_args() {
+        val out = all(
+            """
+            val f = func (v) {
+                [v, [2]]
+            }
+            val y = do {
+                val v = [1]
+                val x = f(v)
+                x
+            }
+            println(y)
+        """
+        )
+        assert(out == "anon : (lin 5, col 21) : block escape error : incompatible scopes\n") { out }
     }
     @Test
     fun scope27_glb_vs_tup() {

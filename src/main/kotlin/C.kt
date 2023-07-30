@@ -613,7 +613,7 @@ fun Coder.main (tags: Tags): String {
                     return 1;
                 }
             } else {
-        //printf(">>> %d\n", src.Dyn->Any.hld_type);
+                //printf(">>> dst=%d >= src=%d\n", depth, src.Dyn->Any.hld_depth);
                 return 0;
             };
             //printf(">>> %d %d -> %d\n", depth, src.Dyn->Any.hld_depth, src.Dyn->);
@@ -668,10 +668,12 @@ fun Coder.main (tags: Tags): String {
                 return 1;
             }
             
-            // col affects v
+            // col affects v:
+            // [v,[1]] <-- moves [1] to v
             if (!(
                 (ceu_hold_chk_set(&col->Any.hld_next, col->Any.hld_depth, col->Any.hld_type, v)) ||
-                (col->Any.hld_type <= CEU_HOLD_COLLECTION)
+                (col->Any.hld_type <= CEU_HOLD_COLLECTION) ||
+                0
             )) {
                 return 0;
             }

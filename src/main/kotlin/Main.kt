@@ -127,7 +127,7 @@ fun all (verbose: Boolean, name: String, reader: Reader, out: String, args: List
         if (verbose) {
             System.err.println("... ceu -> c ...")
         }
-        val coder  = Coder(outer, ups, vars, clos)
+        val coder  = Coder(outer, ups, vars, clos, sta)
         coder.main(tags)
     } catch (e: Throwable) {
         //throw e;

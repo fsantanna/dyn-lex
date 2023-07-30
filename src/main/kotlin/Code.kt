@@ -2,7 +2,7 @@ package dlex
 
 import java.lang.Integer.min
 
-class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos) {
+class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, val sta: Static) {
     val pres: MutableList<String> = mutableListOf()
     val code: String = outer.code()
 
@@ -121,7 +121,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos) {
                     .filter { !GLOBALS.contains(it.id.str) }
                     .filter { !(f_b is Expr.Proto && args.contains(it.id.str)) }
                     .map    { it.id.str.id2c() }
-                if (f_b is Expr.Do && dcls.isEmpty()) {
+                if (f_b is Expr.Do && dcls.isEmpty() && !sta.cons.contains(this)) {
                     """
                     CEU_Block* ceu_block_$n = ${bupc!!};
                     // >>> block
