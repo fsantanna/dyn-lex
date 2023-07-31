@@ -1982,6 +1982,50 @@ class TExec {
         )
         assert(out == "anon : (lin 5, col 21) : block escape error : incompatible scopes\n") { out }
     }
+    @Test
+    fun scope29() {
+        val out = all("""
+            val f = func (v) {
+                v
+            }
+            val x = [2]
+            val y = f([x])
+            println(y)
+
+        """)
+        assert(out == "[[2]]\n") { out }
+    }
+    @Test
+    fun scope29x() {
+        val out = all("""
+            val f = func (v) {
+                v
+            }
+            do {
+                val x = [2]
+                println(f([x]))
+            }
+        """)
+        assert(out == "[[2]]\n") { out }
+    }
+    @Test
+    fun scope30() {
+        val out = all("""
+            val cycle = func (v) {
+                set v[3] = v
+                v
+            }
+            var a = [1]
+            var d = do {
+                var b = [2]
+                var c = cycle([a,b,[3],nil])
+                drop(c)
+            }
+            ;;println(d)  ;; OK: [[1],[2],[3],*]
+            println(:ok)
+        """)
+        assert(out == ":ok\n") { out }
+    }
 
     // IF
 

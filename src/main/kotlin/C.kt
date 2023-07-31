@@ -602,16 +602,10 @@ fun Coder.main (tags: Tags): String {
                 return 1;
             } else if (src.Dyn->Any.hld_type<=CEU_HOLD_COLLECTION && src.Dyn->Any.refs>0 && depth>src.Dyn->Any.hld_depth) {
                 return 0;   // cant move to deeper scope with pending refs
-            } else if (src.Dyn->Any.hld_type == CEU_HOLD_FLEETING) {
+            } else if (src.Dyn->Any.hld_type <= CEU_HOLD_COLLECTION) {
                 // continue below
-            //} else if (src.Dyn->Any.hld_type == CEU_HOLD_COLLECTION) {
-            //    // continue below
             } else if (depth >= src.Dyn->Any.hld_depth) {
-                if (src.Dyn->Any.hld_type == CEU_HOLD_COLLECTION) {
-                    // continue below
-                } else {
-                    return 1;
-                }
+                return 1;
             } else {
                 //printf(">>> dst=%d >= src=%d\n", depth, src.Dyn->Any.hld_depth);
                 return 0;
@@ -623,6 +617,7 @@ fun Coder.main (tags: Tags): String {
             if (depth != src.Dyn->Any.hld_depth) {
                 ceu_hold_chg(src.Dyn, dst, depth);
             }
+            //printf(">>> %d -> %d\n", src_depth, src.Dyn->Any.hld_depth);
             if (depth >= src_depth) {
                 return 1;
             }
@@ -679,20 +674,21 @@ fun Coder.main (tags: Tags): String {
             }
                      
             // v also affects fleeting col with innermost scope
-            if (col->Any.hld_type == CEU_HOLD_FLEETING) {
-                return ceu_hold_chk_set(&v.Dyn->Any.hld_next, v.Dyn->Any.hld_depth, MIN(CEU_HOLD_COLLECTION,v.Dyn->Any.hld_type), ceu_dyn_to_val(col));
-            } else if (col->Any.hld_type <= CEU_HOLD_COLLECTION) {
-                if (v.Dyn->Any.hld_depth < col->Any.hld_depth) {
-                    return 1;
-                } else {
-                    col->Any.hld_type = MAX(col->Any.hld_type, MIN(CEU_HOLD_COLLECTION,v.Dyn->Any.hld_type));
-                    if (v.Dyn->Any.hld_depth > col->Any.hld_depth) {
-                        ceu_hold_chg(col, v.Dyn->Any.hld_prev, v.Dyn->Any.hld_depth);
+            switch (col->Any.hld_type) {
+                case CEU_HOLD_FLEETING:
+                    return ceu_hold_chk_set(&v.Dyn->Any.hld_next, v.Dyn->Any.hld_depth, MIN(CEU_HOLD_COLLECTION,v.Dyn->Any.hld_type), ceu_dyn_to_val(col));
+                case CEU_HOLD_COLLECTION:
+                    if (v.Dyn->Any.hld_depth < col->Any.hld_depth) {
+                        return 1;
+                    } else {
+                        col->Any.hld_type = MAX(col->Any.hld_type, MIN(CEU_HOLD_COLLECTION,v.Dyn->Any.hld_type));
+                        if (v.Dyn->Any.hld_depth > col->Any.hld_depth) {
+                            ceu_hold_chg(col, v.Dyn->Any.hld_prev, v.Dyn->Any.hld_depth);
+                        }
+                        return 1;
                     }
+                default:
                     return 1;
-                }
-            } else {
-                return 1;
             }
         }
 
