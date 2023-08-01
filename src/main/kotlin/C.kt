@@ -21,7 +21,6 @@ fun Coder.main (tags: Tags): String {
 
         typedef enum CEU_HOLD {
             CEU_HOLD_FLEET = 0,     // not assigned, dst assigns
-            CEU_HOLD_BUILD,         // fleeting col with non-fleeting objs 
             CEU_HOLD_MUTAB,         // set and assignable to narrow 
             CEU_HOLD_IMMUT,         // set but not assignable (nested fun)
             CEU_HOLD_MAX
@@ -600,10 +599,12 @@ fun Coder.main (tags: Tags): String {
         int ceu_hold_chk_set (CEU_Dyn** dst, int depth, CEU_HOLD tphold, CEU_Value src) {
             if (src.type < CEU_VALUE_DYNAMIC) {
                 return 1;
-            } else if (src.Dyn->Any.hld_type<=CEU_HOLD_BUILD && src.Dyn->Any.refs>0 && depth>src.Dyn->Any.hld_depth) {
-                return 0;   // cant move to deeper scope with pending refs
-            } else if (src.Dyn->Any.hld_type <= CEU_HOLD_BUILD) {
-                // continue below
+            } else if (src.Dyn->Any.hld_type == CEU_HOLD_FLEET) {
+                if (src.Dyn->Any.refs>0 && depth>src.Dyn->Any.hld_depth) {
+                    return 0;   // cant move to deeper scope with pending refs
+                } else {
+                    // continue below
+                }
             } else if (depth >= src.Dyn->Any.hld_depth) {
                 return 1;
             } else {
@@ -667,7 +668,7 @@ fun Coder.main (tags: Tags): String {
             // [x,[1]] <-- moves v=[1] to v
             if (
                 ceu_hold_chk_set(&col->Any.hld_next, col->Any.hld_depth, col->Any.hld_type, v) ||
-                (col->Any.hld_type <= CEU_HOLD_BUILD)
+                (col->Any.hld_type == CEU_HOLD_FLEET)
             ) {
                 // ok
             } else {
@@ -675,21 +676,18 @@ fun Coder.main (tags: Tags): String {
             }
                      
             // v affects fleeting col with innermost scope
-            switch (col->Any.hld_type) {
-                case CEU_HOLD_FLEET:
-                    return ceu_hold_chk_set(&v.Dyn->Any.hld_next, v.Dyn->Any.hld_depth, MIN(CEU_HOLD_BUILD,v.Dyn->Any.hld_type), ceu_dyn_to_val(col));
-                case CEU_HOLD_BUILD:
-                    if (v.Dyn->Any.hld_depth < col->Any.hld_depth) {
-                        return 1;
-                    } else {
-                        col->Any.hld_type = MAX(col->Any.hld_type, MIN(CEU_HOLD_BUILD,v.Dyn->Any.hld_type));
-                        if (v.Dyn->Any.hld_depth > col->Any.hld_depth) {
-                            ceu_hold_chg(col, v.Dyn->Any.hld_prev, v.Dyn->Any.hld_depth);
-                        }
-                        return 1;
-                    }
-                default:
+            if (col->Any.hld_type == CEU_HOLD_FLEET) {
+                if (v.Dyn->Any.hld_depth < col->Any.hld_depth) {
                     return 1;
+                } else {
+                    col->Any.hld_type = MAX(col->Any.hld_type, MIN(CEU_HOLD_FLEET,v.Dyn->Any.hld_type));
+                    if (v.Dyn->Any.hld_depth > col->Any.hld_depth) {
+                        ceu_hold_chg(col, v.Dyn->Any.hld_prev, v.Dyn->Any.hld_depth);
+                    }
+                    return 1;
+                }
+            } else {
+                return 1;
             }
         }
 
@@ -703,7 +701,7 @@ fun Coder.main (tags: Tags): String {
                 return (CEU_Value) { CEU_VALUE_NIL };
             } else if (dyn->Any.hld_depth == 1) {
                 return (CEU_Value) { CEU_VALUE_NIL };
-            } else if (dyn->Any.hld_type <= CEU_HOLD_BUILD) {
+            } else if (dyn->Any.hld_type == CEU_HOLD_FLEET) {
                 return (CEU_Value) { CEU_VALUE_NIL };
             }
             
