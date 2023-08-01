@@ -28,17 +28,6 @@ fun Expr.is_lval (): Boolean {
     }
 }
 
-fun Expr.base (): Expr.Acc {
-    return when (this) {
-        is Expr.Acc   -> this
-        is Expr.Index -> this.col.base()
-        else -> {
-            println(this)
-            TODO()
-        }
-    }
-}
-
 fun String.tag2c (): String {
     return this
         .drop(1)
