@@ -706,7 +706,7 @@ fun Coder.main (tags: Tags): String {
             }
             
             //printf(">>> %d\n", dyn->Any.refs);
-            if (dyn->Any.hld_type >= CEU_HOLD_IMMUT) {
+            if (dyn->Any.hld_type == CEU_HOLD_IMMUT) {
                 return (CEU_Value) { CEU_VALUE_ERROR, {.Error="drop error : value is not movable"} };
             }
             //if (dyn->Any.refs > 1) {
