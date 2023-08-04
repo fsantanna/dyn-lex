@@ -903,7 +903,7 @@ fun Coder.main (tags: Tags): String {
                 0, 0, CEU_VALUE_NIL, buf
             };
             ceu_hold_add((CEU_Dyn*)ret, &blk->dyns);
-            return ((CEU_Value) { CEU_VALUE_VECTOR, {.Dyn=(CEU_Dyn*)ret} });
+            return (CEU_Value) { CEU_VALUE_VECTOR, {.Dyn=(CEU_Dyn*)ret} };
         }
         
         CEU_Value ceu_dict_create (CEU_Block* blk) {
@@ -930,7 +930,7 @@ fun Coder.main (tags: Tags): String {
                 frame, proto, { upvs, buf }
             };
             ceu_hold_add((CEU_Dyn*)ret, &blk->dyns);
-            return ((CEU_Value) { CEU_VALUE_CLOSURE, {.Dyn=(CEU_Dyn*)ret} });
+            return (CEU_Value) { CEU_VALUE_CLOSURE, {.Dyn=(CEU_Dyn*)ret} };
         }        
     """ +
     """ // PRINT
