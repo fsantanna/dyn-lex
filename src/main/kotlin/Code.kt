@@ -75,15 +75,13 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos) {
                 """
 
                 val pos = """ // CLOSURE | ${this.dump()}
-                CEU_Closure* ceu_closure_$n = ceu_closure_create (
+                CEU_Value ceu_ret_$n = ceu_closure_create (
                     ${up_blk.toc()},
                     ${if (clos.protos_noclos.contains(this)) "CEU_HOLD_IMMUTABLE" else "CEU_HOLD_FLEETING"},
                     ${if (up_blk == outer) "NULL" else "ceu_frame"},
                     ceu_proto_$n,
                     ${clos.protos_refs[this]?.size ?: 0}
                 );
-                assert(ceu_closure_$n != NULL);
-                CEU_Value ceu_ret_$n = ((CEU_Value) { CEU_VALUE_CLOSURE, {.Dyn=(CEU_Dyn*)ceu_closure_$n} });
                 ${assrc("ceu_ret_$n")}
                 
                 // UPVALS
