@@ -171,7 +171,7 @@ fun Coder.main (tags: Tags): String {
         
         CEU_Value    ceu_tuple_create   (CEU_Block* hld, int n);
         CEU_Value    ceu_vector_create  (CEU_Block* hld);
-        CEU_Dict*    ceu_dict_create    (CEU_Block* hld);
+        CEU_Value    ceu_dict_create    (CEU_Block* hld);
         CEU_Closure* ceu_closure_create (CEU_Block* hld, CEU_HOLD tphold, CEU_Frame* frame, CEU_Proto proto, int upvs);
 
         int ceu_tuple_set (CEU_Tuple* tup, int i, CEU_Value v);
@@ -906,7 +906,7 @@ fun Coder.main (tags: Tags): String {
             return ((CEU_Value) { CEU_VALUE_VECTOR, {.Dyn=(CEU_Dyn*)ret} });
         }
         
-        CEU_Dict* ceu_dict_create (CEU_Block* blk) {
+        CEU_Value ceu_dict_create (CEU_Block* blk) {
             CEU_Dict* ret = malloc(sizeof(CEU_Dict));
             assert(ret != NULL);
             *ret = (CEU_Dict) {
@@ -914,7 +914,7 @@ fun Coder.main (tags: Tags): String {
                 0, NULL
             };
             ceu_hold_add((CEU_Dyn*)ret, &blk->dyns);
-            return ret;
+            return (CEU_Value) { CEU_VALUE_DICT, {.Dyn=(CEU_Dyn*)ret} };
         }
         
         CEU_Closure* ceu_closure_create (CEU_Block* blk, CEU_HOLD tphold, CEU_Frame* frame, CEU_Proto proto, int upvs) {
@@ -1208,9 +1208,7 @@ fun Coder.main (tags: Tags): String {
                     break;
                 }
                 case CEU_VALUE_DICT: {
-                    CEU_Dict* new = ceu_dict_create(frame->up_block);
-                    assert(new != NULL);
-                    new->hld_type = CEU_HOLD_FLEETING;
+                    ret = ceu_dict_create(frame->up_block);
                     for (int i=0; i<old->Dict.max; i++) {
                         CEU_Value key;
                         {
@@ -1227,9 +1225,8 @@ fun Coder.main (tags: Tags): String {
                             val = ceu_copy_f(frame, 1, args);
                             assert(val.type != CEU_VALUE_ERROR);
                         }
-                        ceu_dict_set(new, key, val);
+                        ceu_dict_set(&ret.Dyn->Dict, key, val);
                     }
-                    ret = (CEU_Value) { CEU_VALUE_DICT, {.Dyn=(CEU_Dyn*)new} };
                     break;
                 }
                 case CEU_VALUE_CLOSURE:
