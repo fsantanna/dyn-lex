@@ -373,8 +373,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 val bupc = ups.first_block(this)!!.toc()
                 """
                 { // DICT | ${this.dump()}
-                    CEU_Dict* ceu_dict_$n = ceu_dict_create(${ups.first_block(this)!!.toc()});
-                    assert(ceu_dict_$n != NULL);
+                    CEU_Value ceu_dict_$n = ceu_dict_create(${ups.first_block(this)!!.toc()});
                     ${this.args.map { """
                         {
                             ${it.first.code()}
