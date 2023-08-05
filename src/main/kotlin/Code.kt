@@ -168,7 +168,6 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                                     for (int i=0; i<ceu_tup_n_$n; i++) {
                                         assert(ceu_tuple_set(&$idc.Dyn->Tuple, i, ceu_args[$args_n+i]));
                                     }
-                                    $idc = (CEU_Value) { CEU_VALUE_TUPLE, {.Dyn=(CEU_Dyn*)ceu_tup_$n} };
                                     ceu_gc_inc($idc);
                                 """ }}
                             }
