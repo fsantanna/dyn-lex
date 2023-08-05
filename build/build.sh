@@ -6,7 +6,6 @@
 #   - install.sh
 #   - build.sh
 # 2. Build:
-#   - XCEU = true
 #   - Build artifacts...
 #   - ./build.sh
 # 3. Upload:
@@ -15,7 +14,7 @@
 #   - title  = <version>
 #   - Attach = { .zip, install.sh }
 
-VER=v0.2.1
+VER=v0.1.0
 DIR=/tmp/dlex-build/
 
 rm -Rf $DIR

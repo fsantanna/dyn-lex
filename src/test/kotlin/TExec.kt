@@ -39,7 +39,7 @@ fun all (inp: String, pre: Boolean=false): String {
         val vars  = Vars(outer, ups)
         val clos  = Clos(outer, ups, vars)
         val sta   = Static(outer, ups, vars)
-        val coder = Coder(outer, ups, vars, clos)
+        val coder = Coder(outer, ups, vars, clos, sta)
         coder.main(tags)
     } catch (e: Throwable) {
         if (THROW) {
@@ -109,6 +109,7 @@ class TExec {
             do {
                 var g
                 set g = f
+                nil
             }
             println(f)
         """
@@ -524,53 +525,6 @@ class TExec {
         assert(out == "anon : (lin 2, col 21) : block escape error : incompatible scopes\n") { out }
     }
     @Test
-    fun cc_tuple11_copy() {
-        val out = all(
-            """
-            val t1 = [1,2,3]
-            val t2 = copy(t1)
-            val t3 = t1
-            set t1[2] = 999
-            set t2[0] = 10
-            println(t1)
-            println(t2)
-            println(t3)
-        """, true
-        )
-        assert(out == "[1,2,999]\n[10,2,3]\n[1,2,999]\n") { out }
-    }
-    @Test
-    fun cc_tuple12_free_copy() {
-        val out = all(
-            """
-            var f
-            set f = func (v) {
-                ;;println(v)
-                if v > 0 {
-                    copy([f(v - 1)])
-                } else {
-                    0
-                }
-            }
-            println(f(3))
-        """, true
-        )
-        assert(out == "[[[0]]]\n") { out }
-    }
-    @Test
-    fun cc_tuple13_copy_out() {
-        val out = all(
-            """
-            val out = do {
-                val ins = [1,2,3]
-                copy(ins)
-            }
-            println(out)
-        """, true
-        )
-        assert(out == "[1,2,3]\n") { out }
-    }
-    @Test
     fun cc_tuple14_drop_out() {
         val out = all(
             """
@@ -663,61 +617,6 @@ class TExec {
         """, true
         )
         assert(out == "10\n") { out }
-    }
-    @Test
-    fun cc_tuple21_scope_copy() {
-        val out = all(
-            """
-            var x = [1,2,3]
-            do {
-                val y = copy(x)
-                do {
-                    set x = y
-                }
-            }
-            println(x)
-        """, true
-        )
-        assert(out == "anon : (lin 6, col 25) : set error : incompatible scopes\n" +
-                "") { out }
-    }
-    @Test
-    fun cc_tuple22_scope_copy() {
-        val out = all(
-            """
-            var x = [1,2,3]
-            do {
-                val y = copy(x)
-                do {
-                    set x = copy(y)
-                }
-            }
-            println(x)
-        """, true
-        )
-        assert(out == "[1,2,3]\n") { out }
-    }
-    @Test
-    fun cc_tuple23_scope_copy() {
-        val out = all(
-            """
-            var v
-            do {
-                var x = [1,2,3]
-                do {
-                    val y = copy(x)
-                    do {
-                        set x = copy(y)
-                        ;;`printf(">>> %d\n", ceu_mem->x.Dyn->Any.hld_type);`
-                        set v = x       ;; err
-                    }
-                }
-            }
-            println(v)
-        """, true
-        )
-        assert(out == "anon : (lin 10, col 29) : set error : incompatible scopes\n" +
-                "") { out }
     }
     @Test
     fun cc_24_tuple() {
@@ -818,8 +717,8 @@ class TExec {
             println(f(1,2,3))
         """
         )
-        //assert(out == "[[1,2,3]]\n") { out }
-        assert(out == "anon : (lin 4, col 22) : drop error : multiple references\n") { out }
+        assert(out == "[[1,2,3]]\n") { out }
+        //assert(out == "anon : (lin 4, col 22) : drop error : multiple references\n") { out }
     }
     @Test
     fun cm_04() {
@@ -879,6 +778,96 @@ class TExec {
         )
         assert(out == "[]\n") { out }
     }
+    @Test
+    fun cc_09_drop_nest() {
+        val out = all(
+            """
+            val f = func (v) {
+                ;; consumes v
+                10
+            }
+            do {
+                val x = []
+                val y = f(drop(x))
+                println(x, y)
+            }
+        """
+        )
+        assert(out == "nil\t10\n") { out }
+    }
+    @Test
+    fun cc_10_drop_multi_err() {
+        val out = all("""
+            val x = do {
+                val t1 = [1,2,3]
+                val t2 = t1
+                drop(t1)            ;; ERR: `t1` has multiple references
+            }
+            println(x)
+        """)
+        //assert(out == "anon : (lin 5, col 22) : drop error : multiple references\n") { out }
+        assert(out == "[1,2,3]\n") { out }
+    }
+    @Test
+    fun cc_11_drop_deep() {
+        val out = all("""
+            do {
+                val t1 = [1]
+                do {
+                    val t2 = drop(t1)
+                    println(t2)
+                }
+                println(t1)
+            }
+        """)
+        assert(out == "[1]\nnil\n") { out }
+    }
+    @Test
+    fun cc_12_drop_deep() {
+        val out = all("""
+            do {
+                val t1 = [1]
+                val t2 = t1
+                do {
+                    val t3 = drop(t1)
+                    println(t2)
+                }
+                println(t1)
+            }
+        """)
+        assert(out == "anon : (lin 6, col 21) : set error : incompatible scopes\n") { out }
+    }
+    @Test
+    fun cc_13_drop_cycle() {
+        val out = all(
+            """
+            val z = do {
+                var x = [nil]
+                var y = [x]
+                set x[0] = y
+                drop(x)
+            }
+            println(z[0][0] == z)
+        """
+        )
+        assert(out == "true\n") { out }
+    }
+    @Test
+    fun cc_14_drop_cycle() {
+        val out = all(
+            """
+            val z = do {
+                var x = [nil]
+                var y = [x]
+                set x[0] = y
+                drop(x)
+                y
+            }
+            println(z[0][0] == z)
+        """
+        )
+        assert(out == "true\n") { out }
+    }
 
     // DICT
 
@@ -910,6 +899,14 @@ class TExec {
         """
         )
         assert(out == "1\n") { out }
+    }
+    @Test
+    fun dict7_init() {
+        val out = all("""
+            var t = @[x=1, y=2]
+            println(t.x, t.y)
+        """)
+        assert(out == "1\t2\n") { out }
     }
     @Test
     fun dd_dict3() {
@@ -945,23 +942,6 @@ class TExec {
         assert(out == "@[(:x,1),(:y,2)]\n") { out }
     }
     @Test
-    fun dd_dict6_copy() {
-        val out = all(
-            """
-            val t1 = @[]
-            set t1[:x] = 1
-            val t2 = t1
-            val t3 = copy(t1)
-            set t1[:y] = 2
-            set t3[:y] = 20
-            println(t1)
-            println(t2)
-            println(t3)
-        """
-        )
-        assert(out == "@[(:x,1),(:y,2)]\n@[(:x,1),(:y,2)]\n@[(:x,1),(:y,20)]\n") { out }
-    }
-    @Test
     fun dd_dict9_next() {
         val out = all(
             """
@@ -969,11 +949,11 @@ class TExec {
             set t[:x] = 1
             set t[:y] = 2
             var k
-            set k = next-dict(t)
+            set k = next(t)
             println(k, t[k])
-            set k = next-dict(t,k)
+            set k = next(t,k)
             println(k, t[k])
-            set k = next-dict(t,k)
+            set k = next(t,k)
             println(k, t[k])
         """
         )
@@ -992,11 +972,11 @@ class TExec {
             set t[:a] = 10
             set t[:b] = 20
             set t[:c] = 30
-            var k = next-dict(t)
+            var k = next(t)
             loop {
                 if (k == nil) { break } else { nil }
                 println(k, t[k])
-                set k = next-dict(t,k)
+                set k = next(t,k)
             }
         """
         )
@@ -1139,34 +1119,6 @@ class TExec {
         """
         )
         assert(out == "anon : (lin 2, col 13) : invalid set : expected assignable destination") { out }
-    }
-    @Test
-    fun vector11_copy() {
-        val out = all(
-            """
-            val t1 = #[]
-            set t1[#t1] = 1
-            println(t1)
-        """, true
-        )
-        assert(out == "#[1]\n") { out }
-    }
-    @Test
-    fun vector12_copy() {
-        val out = all(
-            """
-            val t1 = #[]        ;; [1,2]
-            set t1[#t1] = 1
-            val t2 = t1         ;; [1,2]
-            val t3 = copy(t1)   ;; [1,20]
-            set t1[#t1] = 2
-            set t3[#t3] = 20
-            println(t1)
-            println(t2)
-            println(t3)
-        """, true
-        )
-        assert(out == "#[1,2]\n#[1,2]\n#[1,20]\n") { out }
     }
     @Test
     fun vector13_add() {
@@ -1760,6 +1712,22 @@ class TExec {
         assert(out == ":ok\n") { out }
     }
     @Test
+    fun scope19x_tup() {
+        val out = all(
+            """
+            do {
+                val t1 = []
+                do {
+                    val t2 = []
+                    [t1,[],t2]
+                }
+            }
+            println(:ok)
+        """
+        )
+        assert(out == "anon : (lin 4, col 17) : block escape error : incompatible scopes\n") { out }
+    }
+    @Test
     fun scope19_leak() {
         val out = all(
             """
@@ -1939,12 +1907,58 @@ class TExec {
         assert(out == "[[1],[2]]\n") { out }
     }
     @Test
+    fun scope26y_args() {
+        val out = all(
+            """
+            val f = func (v) {
+                [v, [2]]
+            }
+            val v = [1]
+            val x = f(v)
+            println(x)
+        """
+        )
+        assert(out == "[[1],[2]]\n") { out }
+    }
+    @Test
+    fun scope26z_args() {
+        val out = all(
+            """
+            val v = [1]
+            val x = do {
+                [v, [2]]
+            }
+            println(x)
+        """
+        )
+        assert(out == "[[1],[2]]\n") { out }
+    }
+    @Test
+    fun scope26x_args() {
+        val out = all(
+            """
+            val f = func (v) {
+                [v, [2]]
+            }
+            val y = do {
+                val v = [1]
+                val x = f(v)
+                x
+            }
+            println(y)
+        """
+        )
+        assert(out == "anon : (lin 5, col 21) : block escape error : incompatible scopes\n") { out }
+    }
+    @Test
     fun scope27_glb_vs_tup() {
         val out = all(
             """
             val f = func (t) {
                 val x = []
+                ;;dump(t)
                 set t[0] = x
+                ;;dump(t)
                 t
             }
             println(f([nil]))
@@ -1968,6 +1982,50 @@ class TExec {
         )
         assert(out == "anon : (lin 5, col 21) : block escape error : incompatible scopes\n") { out }
     }
+    @Test
+    fun scope29() {
+        val out = all("""
+            val f = func (v) {
+                v
+            }
+            val x = [2]
+            val y = f([x])
+            println(y)
+
+        """)
+        assert(out == "[[2]]\n") { out }
+    }
+    @Test
+    fun scope29x() {
+        val out = all("""
+            val f = func (v) {
+                v
+            }
+            do {
+                val x = [2]
+                println(f([x]))
+            }
+        """)
+        assert(out == "[[2]]\n") { out }
+    }
+    @Test
+    fun scope30() {
+        val out = all("""
+            val cycle = func (v) {
+                set v[3] = v
+                v
+            }
+            var a = [1]
+            var d = do {
+                var b = [2]
+                var c = cycle([a,b,[3],nil])
+                drop(c)
+            }
+            ;;println(d)  ;; OK: [[1],[2],[3],*]
+            println(:ok)
+        """)
+        assert(out == ":ok\n") { out }
+    }
 
     // IF
 
@@ -1980,7 +2038,8 @@ class TExec {
             println(x)
         """
         )
-        assert(out == "anon : (lin 4, col 13) : expected \"else\" : have \"println\"") { out }
+        //assert(out == "anon : (lin 4, col 13) : expected \"else\" : have \"println\"") { out }
+        assert(out == "1\n") { out }
     }
     @Test
     fun if2_err() {
@@ -1992,7 +2051,7 @@ class TExec {
             println(x)
         """
         )
-        assert(out == "anon : (lin 5, col 13) : expected \"else\" : have \"println\"") { out }
+        assert(out == "nil\n") { out }
     }
     @Test
     fun if3_err() {
@@ -2027,6 +2086,70 @@ class TExec {
         )
         //assert(out == "anon : (lin 1, col 4) : if error : invalid condition\n") { out }
         assert(out == "1\n") { out }
+    }
+
+    // OPS: not, and, or
+
+    @Test
+    fun op_or_and() {
+        val out = all("""
+            println(true or println(1))
+            println(false and println(1))
+        """)
+        assert(out == "true\nfalse\n") { out }
+    }
+    @Test
+    fun op_not() {
+        val out = all("""
+            println(not nil and not false)
+        """)
+        assert(out == "true\n") { out }
+    }
+    @Test
+    fun op2_or_and() {
+        val out = all("""
+            println(1 or error(5))
+            println(1 and 2)
+            println(nil and 2)
+            println(nil or 2)
+        """)
+        assert(out == "1\n2\nnil\n2\n") { out }
+    }
+    @Test
+    fun op3_or_and() {
+        val out = all("""
+            println(true and ([] or []))
+        """)
+        assert(out == "[]\n") { out }
+    }
+    @Test
+    fun xop3_or_and() {
+        val out = all("""
+            val v = do {
+                val :tmp x = []
+                if x { x } else { [] }
+            }
+            println(v)
+        """)
+        assert(out == "[]\n") { out }
+    }
+    @Test
+    fun op4_and_and() {
+        val out = all("""
+            val v = true and
+                true and 10
+            println(v)
+        """)
+        assert(out == "10\n") { out }
+    }
+    @Test
+    fun op5_plus_plus() {
+        val out = all("""
+            val v = 5 +
+                5 + 10
+            println(v)
+        """, true)
+        assert(out == "20\n") { out }
     }
 
     // FUNC / CALL
@@ -2437,10 +2560,33 @@ class TExec {
     fun loop3() {
         val out = all(
             """
-            val v = loop {if (10) { break } else { nil }}
+            val v = loop {if (10) { break(10) } else { nil }}
             println(v)
         """
         )
+        assert(out == "10\n") { out }
+    }
+    @Test
+    fun loop4() {
+        val out = all(
+            """
+            val v1 = loop {
+                break(10)
+            }
+            val v2 = loop {
+                break
+            }
+            println(v1, v2)
+        """
+        )
+        assert(out == "10\tnil\n") { out }
+    }
+    @Test
+    fun loop5() {
+        val out = all("""
+            val x = 10
+            println(loop { break(x) })
+        """)
         assert(out == "10\n") { out }
     }
 
@@ -2645,6 +2791,15 @@ class TExec {
         """
         )
         assert(out == "10\n10\n") { out }
+    }
+    @Test
+    fun native16_func() {
+        val out = all("""
+            val n = `:number 10`                ;; native 10 is converted to `dyn-lex` number
+            val x = `:ceu ${D}n`                ;; `x` is set to `dyn-lex` `n` as is
+            `printf("> %f\n", ${D}n.Number);`   ;; outputs `n` as a number
+        """)
+        assert(out == "> 10.000000\n") { out }
     }
 
     // OPERATORS
@@ -2869,6 +3024,29 @@ class TExec {
         assert(out == "true\nnil\n") { out }
     }
 
+    // string-to-tag
+
+    @Test
+    fun ff_04_string_to_tag() {
+        val out = all("""
+            pass :xyz
+            println(string-to-tag(":x"))
+            println(string-to-tag(":xyz"))
+            println(string-to-tag("xyz"))
+        """, true)
+        assert(out == "nil\n:xyz\nnil\n") { out }
+    }
+    @Test
+    fun ff_05_string_to_tag() {
+        val out = all("""
+            data :A = []
+            data :A.B = []
+            data :A.B.C = []
+            println(string-to-tag(":A"), string-to-tag(":A.B"), string-to-tag(":A.B.C"))
+        """, true)
+        assert(out == ":A\t:A.B\t:A.B.C\n") { out }
+    }
+
     // TYPE
 
     @Test
@@ -3050,7 +3228,7 @@ class TExec {
             println(tags(s,:T), tags(s,:T.S))
         """, true
         )
-        assert(out == "16\t272\ntrue\tfalse\ntrue\ttrue\n") { out }
+        assert(out == "15\t271\ntrue\tfalse\ntrue\ttrue\n") { out }
     }
     @Test
     fun tags12() {
@@ -3094,17 +3272,6 @@ class TExec {
         )
         assert(out == "[:Z,:Y,:X]\n1\n") { out }
     }
-    @Test
-    fun tags15() {
-        val out = all(
-            """
-            val t = tags([], :x, true)
-            val s = copy(t)
-            println(s)
-        """
-        )
-        assert(out == ":x []\n") { out }
-    }
 
     // ENUM
 
@@ -3140,7 +3307,7 @@ class TExec {
             )
         """, true
         )
-        assert(out == "16\t1000\t1001\t1002\t10\t11\t12\t17\t100\t101\t18\n") { out }
+        assert(out == "15\t1000\t1001\t1002\t10\t11\t12\t16\t100\t101\t17\n") { out }
     }
     @Test
     fun enum02() {
@@ -3364,9 +3531,11 @@ class TExec {
             """
             var f
             set f = func (^x) {
-                func (y) {
+                ;;;val :tmp z =;;; func (y) {
                     [^^x,y]
                 }
+                ;;dump(z)
+                ;;z
             }
             println(f([10])(20))
         """
@@ -3527,27 +3696,6 @@ class TExec {
             var g = do {
                 var t = [1]
                 drop(f(drop(t)))
-            }
-            println(g())
-        """
-        )
-        assert(out == "[1]\n") { out }
-    }
-    @Ignore
-    @Test
-    fun todo_clo24_copy() {
-        val out = all(
-            """
-            var f = func (^a) {
-                func () {
-                    ^^a
-                }
-            }
-            var g = do {
-                var t = [1]
-                var i = copy(f(t))
-                set t[0] = 10
-                drop(i)
             }
             println(g())
         """
@@ -4167,4 +4315,24 @@ class TExec {
         assert(out == "1\t'a'\n") { out }
     }
     */
+
+    // ALL
+    @Test
+    fun zz_01_sum() {
+        val out = all("""
+            var sum = func (n) {                                                            
+                var i = n                                                                   
+                var s = 0                                                                   
+                loop {                                                                      
+                    if i == 0 {                                                             
+                        break(s)                                                            
+                    }                                                                       
+                    set s = s + i                                                           
+                    set i = i - 1                                                           
+                }                                                                           
+            }                                                                               
+            println(sum(5))                                                                
+        """, true)
+        assert(out == "15\n") { out }
+    }
 }

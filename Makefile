@@ -1,8 +1,6 @@
 install:
-	mkdir -p $(DIR)
-	cp out/artifacts/dlex_jar/dlex.jar $(DIR)/dlex.jar
-	cp build/dlex.sh $(DIR)/dlex
-	cp build/prelude.ceu $(DIR)/prelude.ceu
-	ls -l $(DIR)/
-	$(DIR)/dlex --version
-	$(DIR)/dlex build/hello-world.ceu
+	cp out/artifacts/dlex_jar/dlex.jar dlex.jar
+	cp build/dlex.sh dlex
+	cp build/prelude.ceu prelude.ceu
+	./dlex --version
+	./dlex build/hello-world.ceu

@@ -27,18 +27,12 @@ fun Expr.tostr (pre: Boolean = false): String {
         }
         is Expr.Do     -> (this.tk.str=="do").cond{"do "} + "{\n" + this.es.tostr(pre) + "}"
         is Expr.Dcl    -> {
-            val xtmp = when (this.tmp) {
-                true  -> " :tmp"
-                false -> " :xtmp"
-                else  -> ""
-            }
-            /*this.poly.cond { "poly " } +*/
-            this.tk_.str + xtmp + " " + this.id.tostr() + this.tag.cond{" "+it.str} + this.src.cond { " = ${it.tostr(pre)}" }
+            this.tk_.str + this.tmp.cond { ":tmp" } + " " + this.id.tostr() + this.tag.cond{" "+it.str} + this.src.cond { " = ${it.tostr(pre)}" }
         }
         is Expr.Set    -> "set " + this.dst.tostr(pre) + " = " + this.src.tostr(pre)
         is Expr.If     -> "if " + this.cnd.tostr(pre) + " " + this.t.tostr(pre) + " else " + this.f.tostr(pre)
         is Expr.Loop   -> "loop " + this.body.tostr(pre)
-        is Expr.Break -> "break"
+        is Expr.Break  -> "break(" + this.e.tostr(pre) + ")"
         is Expr.Enum   -> "enum {\n" + this.tags.map {
             (tag,e) -> tag.str + e.cond { " = " + "`" + it.str + "`" }
         }.joinToString(",\n") + "\n}"

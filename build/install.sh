@@ -1,6 +1,6 @@
 #!/bin/sh
 
-VER=v0.2.1
+VER=v0.1.0
 
 if [ -z "$1" ]
 then
@@ -21,7 +21,7 @@ then
 fi
 
 echo Downloading...
-wget -nv https://github.com/fsantanna/dlex/releases/download/$VER/dlex-$VER.zip
+wget -nv https://github.com/fsantanna/dyn-lex/releases/download/$VER/dlex-$VER.zip
 # --show-progress --progress=bar:force
 
 echo Unziping...

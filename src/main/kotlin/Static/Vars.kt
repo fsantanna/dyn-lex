@@ -173,7 +173,7 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
             }
             is Expr.If     -> { this.cnd.traverse() ; this.t.traverse() ; this.f.traverse() }
             is Expr.Loop   -> this.body.traverse()
-            is Expr.Break -> {}
+            is Expr.Break  -> this.e.traverse()
             is Expr.Enum   -> {}
             is Expr.Data   -> {
                 val sup = this.tk.str.dropLastWhile { it != '.' }.dropLast(1)
@@ -235,7 +235,6 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
                                 err(tk, "native error : (lin $l, col $c) : invalid identifier")
                             }
                             val dcl = find(this, id, 0)
-                            val blk = dcl_to_blk[dcl]!!
                             val (idx,_) = id2c(dcl, 0)
                             "($idx)$no"
                         }
