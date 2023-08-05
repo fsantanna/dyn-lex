@@ -133,10 +133,10 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         CEU_Block* ceu_block_$n = &_ceu_block_$n; 
                         ${(f_b == null).cond { """
                             // main block varargs (...)
-                            CEU_Value _dot__dot__dot_ = ceu_tuple_create(ceu_block_$n, ceu_argc);
+                            CEU_Value id__dot__dot__dot_ = ceu_tuple_create(ceu_block_$n, ceu_argc);
                             for (int i=0; i<ceu_argc; i++) {
                                 CEU_Value vec = ceu_vector_from_c_string(ceu_block_$n, ceu_argv[i]);
-                                assert(ceu_tuple_set(&_dot__dot__dot_.Dyn->Tuple, i, vec));
+                                assert(ceu_tuple_set(&id__dot__dot__dot_.Dyn->Tuple, i, vec));
                             }
                         """ }}
                         ${(f_b is Expr.Proto).cond { // initialize parameters from outer proto
