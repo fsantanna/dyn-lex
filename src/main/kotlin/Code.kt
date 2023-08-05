@@ -68,7 +68,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 val pos = """ // CLOSURE | ${this.dump()}
                 CEU_Value ceu_ret_$n = ceu_closure_create (
                     ${up_blk.toc()},
-                    ${if (clos.protos_noclos.contains(this)) "CEU_HOLD_IMMUTABLE" else "CEU_HOLD_FLEETING"},
+                    ${if (clos.protos_noclos.contains(this)) "CEU_HOLD_IMMUT" else "CEU_HOLD_FLEET"},
                     ${if (up_blk == outer) "NULL" else "ceu_frame"},
                     ceu_proto_$n,
                     ${clos.protos_refs[this]?.size ?: 0}
@@ -119,7 +119,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     .filter { !GLOBALS.contains(it.id.str) }
                     .filter { !(f_b is Expr.Proto && args.contains(it.id.str)) }
                     .map    { it.id.str.id2c() }
-                if (f_b is Expr.Do && dcls.isEmpty()) {
+                if (f_b is Expr.Do && dcls.isEmpty() && !sta.cons.contains(this)) {
                     """
                     CEU_Block* ceu_block_$n = ${bupc!!};
                     // >>> block

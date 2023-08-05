@@ -177,7 +177,7 @@ fun Coder.main (tags: Tags): String {
 
         CEU_Value ceu_vector_get (CEU_Vector* vec, int i);
         int ceu_vector_set (CEU_Vector* vec, int i, CEU_Value v);
-        CEU_Vector* ceu_vector_from_c_string (CEU_Block* hld, const char* str);
+        CEU_Value ceu_vector_from_c_string (CEU_Block* hld, const char* str);
         
         int ceu_dict_key_to_index (CEU_Dict* col, CEU_Value key, int* idx);
         CEU_Value ceu_dict_get (CEU_Dict* col, CEU_Value key);
@@ -993,7 +993,7 @@ fun Coder.main (tags: Tags): String {
             CEU_Dict* ret = malloc(sizeof(CEU_Dict));
             assert(ret != NULL);
             *ret = (CEU_Dict) {
-                CEU_VALUE_DICT, 0, CEU_HOLD_FLEETING, blk->depth, NULL, NULL, NULL,
+                CEU_VALUE_DICT, 0, CEU_HOLD_FLEET, blk->depth, NULL, NULL, NULL,
                 0, NULL
             };
             ceu_hold_add((CEU_Dyn*)ret, &blk->dyns);
@@ -1241,7 +1241,7 @@ fun Coder.main (tags: Tags): String {
             &_ceu_frame_, ceu_op_slash_equals_f, {0,NULL}
         };
         CEU_Closure ceu_string_dash_to_dash_tag = { 
-            CEU_VALUE_CLOSURE, 1, CEU_HOLD_MUTABLE, 1, NULL, NULL, NULL,
+            CEU_VALUE_CLOSURE, 1, CEU_HOLD_MUTAB, 1, NULL, NULL, NULL,
             &_ceu_frame_, ceu_string_dash_to_dash_tag_f, {0,NULL}
         };
 
