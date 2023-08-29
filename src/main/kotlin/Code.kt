@@ -19,13 +19,6 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
     fun Expr.asdst_src (): String {
         return "(ceu_set_${(ups.pub[this] as Expr.Set).n})"
     }
-    fun Expr.assrc (v: String): String {
-        return if (this.isdst()) {
-            "ceu_acc = (CEU_Value) { CEU_VALUE_NIL };\n"
-        } else {
-            "ceu_acc = $v;\n"
-        }
-    }
 
     fun Expr.code(): String {
         if (this.isdst()) {
@@ -73,7 +66,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     ceu_proto_$n,
                     ${clos.protos_refs[this]?.size ?: 0}
                 );
-                ${assrc("ceu_ret_$n")}
+                ceu_acc = ceu_ret_$n;
                 
                 // UPVALS
                 ${clos.protos_refs[this].cond {
@@ -243,7 +236,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     }}
                     _${idc}_ = $bupc;
                     ceu_gc_inc(${idc});
-                    ${assrc(idc)}
+                    ceu_acc = $idc;
                     """
                 }}
                 """
@@ -254,7 +247,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     ${this.src.code()}
                     CEU_Value ceu_set_$n = ceu_acc;
                     ${this.dst.code()}
-                    ${assrc("ceu_set_$n")}
+                    ceu_acc = ceu_set_$n;
                 }
                 """
             }
@@ -285,18 +278,18 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
             is Expr.Nat -> {
                 val body = vars.nat_to_str[this]!!
                 when (this.tk_.tag) {
-                    null   -> body + "\n" + assrc("((CEU_Value){ CEU_VALUE_NIL })")
-                    ":ceu" -> assrc(body)
+                    null   -> body + "\n" + "ceu_acc = ((CEU_Value){ CEU_VALUE_NIL });"
+                    ":ceu" -> "ceu_acc = $body;"
                     else -> {
                         val (TAG,Tag) = this.tk_.tag.drop(1).let {
                             Pair(it.uppercase(), it.first().uppercase()+it.drop(1))
                         }
-                        assrc("((CEU_Value){ CEU_VALUE_$TAG, {.$Tag=($body)} })")
+                        "ceu_acc = ((CEU_Value){ CEU_VALUE_$TAG, {.$Tag=($body)} });"
                     }
                 }
             }
             is Expr.Acc -> {
-                val (blk,dcl) = vars.get(this)
+                val (_,dcl) = vars.get(this)
                 val (idc,_idc_) = vars.id2c(dcl, this.tk_.upv)
                 when {
                     this.isdst() -> {
@@ -331,14 +324,14 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         }
                         """
                     }
-                    else -> assrc(idc)
+                    else -> "ceu_acc = $idc;"
                 }
             }
-            is Expr.Nil -> assrc("((CEU_Value) { CEU_VALUE_NIL })")
-            is Expr.Tag -> assrc("((CEU_Value) { CEU_VALUE_TAG, {.Tag=CEU_TAG_${this.tk.str.tag2c()}} })")
-            is Expr.Bool -> assrc("((CEU_Value) { CEU_VALUE_BOOL, {.Bool=${if (this.tk.str == "true") 1 else 0}} })")
-            is Expr.Char -> assrc("((CEU_Value) { CEU_VALUE_CHAR, {.Char=${this.tk.str}} })")
-            is Expr.Num -> assrc("((CEU_Value) { CEU_VALUE_NUMBER, {.Number=${this.tk.str}} })")
+            is Expr.Nil -> "ceu_acc = ((CEU_Value) { CEU_VALUE_NIL });"
+            is Expr.Tag -> "ceu_acc = ((CEU_Value) { CEU_VALUE_TAG, {.Tag=CEU_TAG_${this.tk.str.tag2c()}} });"
+            is Expr.Bool -> "ceu_acc = ((CEU_Value) { CEU_VALUE_BOOL, {.Bool=${if (this.tk.str == "true") 1 else 0}} });"
+            is Expr.Char -> "ceu_acc = ((CEU_Value) { CEU_VALUE_CHAR, {.Char=${this.tk.str}} });"
+            is Expr.Num -> "ceu_acc = ((CEU_Value) { CEU_VALUE_NUMBER, {.Number=${this.tk.str}} });"
 
             is Expr.Tuple -> {
                 val bupc = ups.first_block(this)!!.toc()
@@ -353,7 +346,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         }
                         """
                 }.joinToString("")}
-                    ${assrc("ceu_tup_$n")}
+                    ceu_acc = ceu_tup_$n;
                 }
                 """
             }
@@ -370,7 +363,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         }
                         """
                 }.joinToString("")}
-                    ${assrc("ceu_vec_$n")}
+                    ceu_acc = ceu_vec_$n;
                 }
                 """
             }
@@ -391,7 +384,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                             }
                         }
                     """ }.joinToString("")}
-                    ${assrc("ceu_dict_$n")}
+                    ceu_acc = ceu_dict_$n;
                 }
                 """
             }
@@ -441,20 +434,19 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         """
                     }
                     this.isdrop() -> {
-                        val bupc = ups.first_block(this)!!.toc()
                         """
                         {   // INDEX - DROP
                             CEU_Value ceu_col_$n = ceu_acc;
                             switch (ceu_col_$n.type) {
                                 case CEU_VALUE_TUPLE:
-                                    ${assrc("ceu_col_$n.Dyn->Tuple.buf[(int) ceu_idx_$n.Number]")}
+                                    ceu_acc = ceu_col_$n.Dyn->Tuple.buf[(int) ceu_idx_$n.Number];
                                     break;
                                 case CEU_VALUE_VECTOR:
-                                    ${assrc("""ceu_assert2($bupc, ceu_vector_get(&ceu_col_$n.Dyn->Vector, ceu_idx_$n.Number), "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})")""")}
+                                    ceu_acc = ceu_assert2($bupc, ceu_vector_get(&ceu_col_$n.Dyn->Vector, ceu_idx_$n.Number), "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
                                     break;
                                 case CEU_VALUE_DICT: {
                                     CEU_Value ceu_dict = ceu_col_$n;
-                                    ${assrc("ceu_dict_get(&ceu_dict.Dyn->Dict, ceu_idx_$n)")}
+                                    ceu_acc = ceu_dict_get(&ceu_dict.Dyn->Dict, ceu_idx_$n);
                                     break;
                                 }
                                 default:
@@ -494,14 +486,14 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     else -> """
                         switch (ceu_acc.type) {
                             case CEU_VALUE_TUPLE:
-                                ${assrc("ceu_acc.Dyn->Tuple.buf[(int) ceu_idx_$n.Number]")}
+                                ceu_acc = ceu_acc.Dyn->Tuple.buf[(int) ceu_idx_$n.Number];
                                 break;
                             case CEU_VALUE_VECTOR:
-                                ${assrc("""ceu_assert2($bupc, ceu_vector_get(&ceu_acc.Dyn->Vector, ceu_idx_$n.Number), "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})")""")}
+                                ceu_acc = ceu_assert2($bupc, ceu_vector_get(&ceu_acc.Dyn->Vector, ceu_idx_$n.Number), "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
                                 break;
                             case CEU_VALUE_DICT: {
                                 CEU_Value ceu_dict = ceu_acc;
-                                ${assrc("ceu_dict_get(&ceu_dict.Dyn->Dict, ceu_idx_$n)")}
+                                ceu_acc = ceu_dict_get(&ceu_dict.Dyn->Dict, ceu_idx_$n);
                                 break;
                             }
                             default:
