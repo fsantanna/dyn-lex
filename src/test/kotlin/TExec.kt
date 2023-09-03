@@ -2607,7 +2607,7 @@ class TExec {
             }
             println(:ok)
         """)
-        assert(out == "anon : (lin 5, col 21) : invalid break : expected parent loop\n") { out }
+        assert(out == "anon : (lin 5, col 21) : invalid break : expected parent loop") { out }
     }
     @Test
     fun oo_10_loop() {
