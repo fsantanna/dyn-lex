@@ -119,11 +119,16 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     .filter { !GLOBALS.contains(it.id.str) }
                     .filter { !(f_b is Expr.Proto && args.contains(it.id.str)) }
                     .map    { it.id.str.id2c() }
+                val loop_body = if (up !is Expr.Loop) body else """
+                    while (1) { // LOOP | ${this.dump()}
+                        $body
+                    }
+                """
                 if (f_b is Expr.Do && dcls.isEmpty() && !sta.cons.contains(this)) {
                     """
                     CEU_Block* ceu_block_$n = ${bupc!!};
                     // >>> block
-                    $body
+                    $loop_body
                     // <<< block
                     """
                 } else {
@@ -181,7 +186,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         ${(f_b == null).cond{ pres.joinToString("") }}
                         
                         // >>> block
-                        $body
+                        $loop_body
                         // <<< block
                         
                         ${(f_b != null).cond {
@@ -268,14 +273,13 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     }
                 }
                 """
-            is Expr.Loop -> """
-                while (1) { // LOOP | ${this.dump()}
-                    ${this.body.code()}
-                }
-                """
+            is Expr.Loop -> this.body.code()
             is Expr.Break -> """
-                ${this.e.code()}
-                break;
+                ${this.cnd.code()}
+                if (ceu_as_bool(ceu_acc)) {
+                    ${this.e.cond { it.code() }}
+                    break;
+                }
             """
             is Expr.Enum -> ""
             is Expr.Data -> ""

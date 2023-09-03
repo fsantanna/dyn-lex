@@ -35,7 +35,7 @@ class Ups (outer: Expr.Do) {
             is Expr.Set    -> this.map(listOf(this.dst, this.src))
             is Expr.If     -> this.map(listOf(this.cnd, this.t, this.f))
             is Expr.Loop   -> this.map(listOf(this.body))
-            is Expr.Break  -> this.map(listOf(this.e))
+            is Expr.Break  -> this.map(listOf(this.cnd) + listOfNotNull(this.e))
             is Expr.Enum   -> emptyMap()
             is Expr.Data   -> emptyMap()
             is Expr.Pass   -> this.map(listOf(this.e))

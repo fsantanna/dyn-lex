@@ -974,7 +974,7 @@ class TExec {
             set t[:c] = 30
             var k = next(t)
             loop {
-                if (k == nil) { break } else { nil }
+                break if (k == nil)
                 println(k, t[k])
                 set k = next(t,k)
             }
@@ -1344,7 +1344,6 @@ class TExec {
         )
         assert(out == "1\n") { out }
     }
-
     @Test
     fun if5() {
         val out = all(
@@ -2484,13 +2483,25 @@ class TExec {
     // LOOP
 
     @Test
-    fun loop0() {
+    fun oo_01_loop_err() {
+        val out = all("""
+            loop {
+                do {
+                    break if true
+                }
+            }
+            println(:out)
+        """)
+        assert(out == "anon : (lin 4, col 21) : invalid break : expected parent loop") { out }
+    }
+    @Test
+    fun oo_02_loop() {
         val out = all(
             """
             do {
                 loop {
                     println(:in)
-                    break
+                    break if true
                 }
             }
             println(:out)
@@ -2499,17 +2510,13 @@ class TExec {
         assert(out == ":in\n:out\n") { out }
     }
     @Test
-    fun loop1() {
+    fun oo_03_loop() {
         val out = all(
             """
             var x
             set x = false
             loop {
-                if x {
-                    break
-                } else {
-                    nil
-                }
+                break if x
                 set x = true
             }
             println(x)
@@ -2518,7 +2525,7 @@ class TExec {
         assert(out == "true\n") { out }
     }
     @Test
-    fun loop2() {
+    fun oo_04_loop() {
         val out = all(
             """
             val f = func (t) {
@@ -2533,7 +2540,7 @@ class TExec {
                 val it = [f, 0]
                 var i = it[0](it)
                 loop {
-                    if (i == nil) { break } else { nil }
+                    break if (i == nil)
                     println(i)
                     set i = it[0](it)
                 }
@@ -2543,7 +2550,7 @@ class TExec {
         assert(out == "1\n2\n3\n4\n5\n") { out }
     }
     @Test
-    fun loop2a() {
+    fun oo_05_loop() {
         val out = all(
             """
             val f = func (t) {
@@ -2557,24 +2564,24 @@ class TExec {
         assert(out == ":ok\n") { out }
     }
     @Test
-    fun loop3() {
+    fun oo_06_loop() {
         val out = all(
             """
-            val v = loop {if (10) { break(10) } else { nil }}
+            val v = loop {break if (10)}
             println(v)
         """
         )
         assert(out == "10\n") { out }
     }
     @Test
-    fun loop4() {
+    fun oo_07_loop() {
         val out = all(
             """
             val v1 = loop {
-                break(10)
+                break(10) if true
             }
             val v2 = loop {
-                break
+                break if true
             }
             println(v1, v2)
         """
@@ -2582,12 +2589,36 @@ class TExec {
         assert(out == "10\tnil\n") { out }
     }
     @Test
-    fun loop5() {
+    fun oo_08_loop() {
         val out = all("""
             val x = 10
-            println(loop { break(x) })
+            println(loop { break(x) if true })
         """)
         assert(out == "10\n") { out }
+    }
+    @Test
+    fun oo_09_loop() {
+        val out = all("""
+            loop {
+                do {
+                    val t = []
+                    break if true
+                }
+            }
+            println(:ok)
+        """)
+        assert(out == ":ok\n") { out }
+    }
+    @Test
+    fun oo_10_loop() {
+        val out = all("""
+            loop {
+                val t = []
+                break if true
+            }
+            println(:ok)
+        """)
+        assert(out == ":ok\n") { out }
     }
 
     // NATIVE

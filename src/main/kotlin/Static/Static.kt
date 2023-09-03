@@ -39,7 +39,15 @@ class Static (outer: Expr.Do, val ups: Ups, val vars: Vars) {
                 }
                 this.body.traverse()
             }
-            is Expr.Break  -> this.e.traverse()
+            is Expr.Break  -> {
+                if (ups.pub[this] is Expr.Do && ups.pub[ups.pub[this]] is Expr.Loop) {
+                    // ok
+                } else {
+                    err(this.tk, "invalid break : expected parent loop")
+                }
+                this.cnd.traverse()
+                this.e?.traverse()
+            }
             is Expr.Enum   -> {}
             is Expr.Data   -> {}
             is Expr.Pass   -> this.e.traverse()
