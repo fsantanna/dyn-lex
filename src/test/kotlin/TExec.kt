@@ -2581,7 +2581,7 @@ class TExec {
                 break(10) if true
             }
             val v2 = loop {
-                break if true
+                break(nil) if true
             }
             println(v1, v2)
         """
@@ -2607,7 +2607,7 @@ class TExec {
             }
             println(:ok)
         """)
-        assert(out == ":ok\n") { out }
+        assert(out == "anon : (lin 5, col 21) : invalid break : expected parent loop\n") { out }
     }
     @Test
     fun oo_10_loop() {
@@ -4355,9 +4355,7 @@ class TExec {
                 var i = n                                                                   
                 var s = 0                                                                   
                 loop {                                                                      
-                    if i == 0 {                                                             
-                        break(s)                                                            
-                    }                                                                       
+                    break(s) if i == 0
                     set s = s + i                                                           
                     set i = i - 1                                                           
                 }                                                                           

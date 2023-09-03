@@ -516,7 +516,7 @@ class TParser {
     fun rr_01_break_err() {
         val l = lexer("break")
         val parser = Parser(l)
-        assert(trap { parser.expr_1_bin() } == "anon : (lin 1, col 6) : expected expression : have end of file")
+        assert(trap { parser.expr_1_bin() } == "anon : (lin 1, col 6) : expected \"if\" : have end of file")
     }
     @Test
     fun rr_02_break_err() {
