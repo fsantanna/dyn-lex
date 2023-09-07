@@ -667,8 +667,8 @@ fun Coder.main (tags: Tags): String {
             // col affects v:
             // [x,[1]] <-- moves v=[1] to v
             if (
-                (col->Any.hld_type == CEU_HOLD_FLEET) ||
-                ceu_hold_chk_set(&col->Any.hld_next, col->Any.hld_depth, col->Any.hld_type, v)
+                ceu_hold_chk_set(&col->Any.hld_next, col->Any.hld_depth, col->Any.hld_type, v) ||
+                (col->Any.hld_type == CEU_HOLD_FLEET) // must be second b/c chk_set above may modify v
             ) {
                 // ok
             } else {
