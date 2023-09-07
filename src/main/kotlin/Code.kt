@@ -225,12 +225,12 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 """
                 // DCL | ${this.dump()}
                 ${(this.init && this.src!=null && !unused).cond {
-                    this.src!!.code() + """
-                        if (!ceu_hold_chk_set(&$bupc->dyns, $bupc->depth, ${if (this.tmp) "CEU_HOLD_FLEET" else "CEU_HOLD_MUTAB"}, ceu_acc)) {
+                    this.src!!.code() + (!this.tmp).cond { """
+                        if (!ceu_hold_chk_set(&$bupc->dyns, $bupc->depth, CEU_HOLD_MUTAB, ceu_acc)) {
                             CEU_Value err = { CEU_VALUE_ERROR, {.Error="declaration error : incompatible scopes"} };
                             ceu_error2($bupc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", err);
                         }
-                    """
+                    """ }
                 }}
                 ${if (id == "_") "" else {
                     """
@@ -302,9 +302,10 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         if (dcl.id.upv > 0) {
                             err(tk, "set error : cannot reassign an upval")
                         }
+                        assert(!dcl.tmp)    // removed support for "val :tmp x"
                         """
                         { // ACC - SET
-                            if (!ceu_hold_chk_set(&${_idc_}->dyns, ${_idc_}->depth, ${if (dcl.tmp) "CEU_HOLD_FLEET" else "CEU_HOLD_MUTAB"}, $src)) {
+                            if (!ceu_hold_chk_set(&${_idc_}->dyns, ${_idc_}->depth, CEU_HOLD_MUTAB, $src)) {
                                 CEU_Value err = { CEU_VALUE_ERROR, {.Error="set error : incompatible scopes"} };
                                 ceu_error2($bupc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", err);
                             }
