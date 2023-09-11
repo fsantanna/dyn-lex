@@ -9,12 +9,12 @@
 #   - Build artifacts...
 #   - ./build.sh
 # 3. Upload:
-#   - https://github.com/fsantanna/dlex/releases/new
+#   - https://github.com/fsantanna/dyn-lex/releases/new
 #   - tag    = <version>
 #   - title  = <version>
 #   - Attach = { .zip, install.sh }
 
-VER=v0.1.0
+VER=v0.2.0
 DIR=/tmp/dlex-build/
 
 rm -Rf $DIR

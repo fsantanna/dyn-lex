@@ -23,8 +23,8 @@ $ sudo apt install gcc default-jre
 2. Install `dlex`:
 
 ```
-$ wget https://github.com/fsantanna/dyn-lex/releases/download/v0.1.0/install-v0.1.0.sh
-$ sh install-v0.1.0.sh ./dlex/
+$ wget https://github.com/fsantanna/dyn-lex/releases/download/v0.2.0/install-v0.2.0.sh
+$ sh install-v0.2.0.sh ./dlex/
 ```
 
 - You may want to
