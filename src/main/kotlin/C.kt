@@ -596,7 +596,7 @@ fun Coder.main (tags: Tags): String {
             ceu_hold_add(dyn, nxt);
         }
 
-        int ceu_hold_chk_set (CEU_Dyn** dst, int depth, CEU_HOLD tphold, CEU_Value src) {
+        int ceu_hold_chk_set (CEU_Dyn** dst, int depth, CEU_HOLD type, CEU_Value src) {
             if (src.type < CEU_VALUE_DYNAMIC) {
                 return 1;
             } else if (src.Dyn->Any.hld_type == CEU_HOLD_FLEET) {
@@ -608,49 +608,48 @@ fun Coder.main (tags: Tags): String {
             } else if (depth >= src.Dyn->Any.hld_depth) {
                 return 1;
             } else {
-                //printf(">>> dst=%d >= src=%d\n", depth, src.Dyn->Any.hld_depth);
                 return 0;
             };
-            //printf(">>> %d %d -> %d\n", depth, src.Dyn->Any.hld_depth, src.Dyn->);
 
-            src.Dyn->Any.hld_type = MAX(src.Dyn->Any.hld_type,tphold);
             int src_depth = src.Dyn->Any.hld_depth;
+            int src_type  = src.Dyn->Any.hld_type;
+
+            src.Dyn->Any.hld_type = MAX(src.Dyn->Any.hld_type,type);
             if (depth != src.Dyn->Any.hld_depth) {
                 ceu_hold_chg(src.Dyn, dst, depth);
             }
-            //printf(">>> %d -> %d\n", src_depth, src.Dyn->Any.hld_depth);
-            if (depth >= src_depth) {
+            if (src.Dyn->Any.hld_type==src_type && depth>=src_depth) {
                 return 1;
             }
 
             switch (src.Dyn->Any.type) {
                 case CEU_VALUE_CLOSURE:
                     for (int i=0; i<src.Dyn->Closure.upvs.its; i++) {
-                        if (!ceu_hold_chk_set(dst, depth, tphold, src.Dyn->Closure.upvs.buf[i])) {
+                        if (!ceu_hold_chk_set(dst, depth, type, src.Dyn->Closure.upvs.buf[i])) {
                             return 0;
                         }
                     }
                     break;
                 case CEU_VALUE_TUPLE:
                     for (int i=0; i<src.Dyn->Tuple.its; i++) {
-                        if (!ceu_hold_chk_set(dst, depth, tphold, src.Dyn->Tuple.buf[i])) {
+                        if (!ceu_hold_chk_set(dst, depth, type, src.Dyn->Tuple.buf[i])) {
                             return 0;
                         }
                     }
                     break;
                 case CEU_VALUE_VECTOR:
                     for (int i=0; i<src.Dyn->Vector.its; i++) {
-                        if (!ceu_hold_chk_set(dst, depth, tphold, ceu_vector_get(&src.Dyn->Vector,i))) {
+                        if (!ceu_hold_chk_set(dst, depth, type, ceu_vector_get(&src.Dyn->Vector,i))) {
                             return 0;
                         }
                     }
                     break;
                 case CEU_VALUE_DICT:
                     for (int i=0; i<src.Dyn->Dict.max; i++) {
-                        if (!ceu_hold_chk_set(dst, depth, tphold, (*src.Dyn->Dict.buf)[i][0])) {
+                        if (!ceu_hold_chk_set(dst, depth, type, (*src.Dyn->Dict.buf)[i][0])) {
                             return 0;
                         }
-                        if (!ceu_hold_chk_set(dst, depth, tphold, (*src.Dyn->Dict.buf)[i][1])) {
+                        if (!ceu_hold_chk_set(dst, depth, type, (*src.Dyn->Dict.buf)[i][1])) {
                             return 0;
                         }
                     }

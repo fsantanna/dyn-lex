@@ -270,6 +270,14 @@ class TExec {
         )
         assert(out == "10\nnil\n") { out }
     }
+    @Test
+    fun bb_11_hold() {
+        val out = all("""
+            val t = [[nil]]
+            dump(t[0])
+        """)
+        assert(out.contains("hold  = 1")) { out }
+    }
 
     // INDEX / TUPLE
 
@@ -2378,6 +2386,18 @@ class TExec {
         )
         assert(out == "anon : (lin 3, col 17) : access error : variable \"f\" is not declared") { out }
     }
+    @Test
+    fun func_19_err() {
+        val out = all("""
+            val f = func (v) {
+                1
+            }
+            val t = [[nil]]
+            println(f(t[0]))        ;; 1
+            println(f([[nil]][0]))  ;; err
+        """)
+        assert(out == "anon : (lin 2, col 30) : argument error : incompatible scopes\n1\n") { out }
+    }
 
     // FUNC / ARGS / DOTS / ...
 
@@ -4363,5 +4383,44 @@ class TExec {
             println(sum(5))                                                                
         """, true)
         assert(out == "15\n") { out }
+    }
+    @Test
+    fun zz_02_func_scope() {
+        val out = all("""
+            var f
+            set f = func (v) {
+                if v == nil {
+                    1
+                } else {
+                    f(v[0])
+                }
+            }
+            val t = [[nil]]
+            println(f(t))
+        """)
+        assert(out == "1\n") { out }
+    }
+    @Test
+    fun zz_03_arthur() {
+        val out = all("""
+            val tree1 = @[
+                (:left, @[
+                    (:left, nil),
+                    (:right, nil)
+                ]),
+                (:right, nil)
+            ]
+            var itemCheck
+            set itemCheck = func (tree) {
+                if tree == nil {
+                    1
+                }
+                else {
+                    itemCheck(tree[:left]) + itemCheck(tree[:right])
+                }
+            }
+            println(itemCheck(tree1))
+        """, true)
+        assert(out == "3\n") { out }
     }
 }
