@@ -1018,6 +1018,30 @@ class TExec {
         assert(out == "anon : (lin 5, col 21) : set error : incompatible scopes\n" +
                 "") { out }
     }
+    @Test
+    fun dd_13_dict() {
+        val out = all("""
+            val tree1 = @[
+                (:left, @[
+                    (:left, 1),
+                    (:right, 2)
+                ]),
+                (:right, 3)
+            ]
+            
+            val tree2 = @[
+                left= @[
+                    left=1,
+                    right=2
+                ],
+                right=3
+            ]
+            println(tree1)
+            println(tree2)
+        """)
+        assert(out == "@[(:left,@[(:left,1),(:right,2)]),(:right,3)]\n" +
+                "@[(:left,@[(:left,1),(:right,2)]),(:right,3)]\n") { out }
+    }
 
     // VECTOR
 

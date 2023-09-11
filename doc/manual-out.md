@@ -99,11 +99,7 @@ val to-vector = func (n) {  ;; vector with n items
     val ret = #[]           ;; vector is allocated locally
     var i = 0
     loop {
-        if i == n {
-            break
-        } else {
-            nil
-        }
+        break if (i == n)
         set i = i + 1
         set ret[#ret] = i   ;; each value is appended to vector
     }
@@ -1184,21 +1180,23 @@ val v = if x>0 { x } else { -x }
 
 ```
 Loop  : `loop´ Block
-Break : `break´
+Break : `break´ [Expr] `if´ Expr
 ```
 
 A `loop` executes a block of code continuously until a matching `break` occurs.
+
+A `break` escapes the enclosing loop if the given condition is met.
+A break must be placed at the immediate block nested to its corresponding loop.
+
+The loop evaluates to the optional break expression, or to the given break
+condition.
 
 Examples:
 
 ```
 var i = 0
 loop {       ;; --> 0,1,2,3,4
-    if i == 5 {
-        break
-    } else {
-        nil
-    }
+    break if (i == 5)
     println(i)
     set i = i + 1
 }
@@ -1442,7 +1440,7 @@ Expr  : `do´ Block                                      ;; explicit block
       | `if´ Expr Block [`else´ Block]                  ;; conditional
 
       | `loop´ Block                                    ;; loop
-      | `break`                                         ;; loop break
+      | `break` [Expr] `if´ Expr                        ;; loop break
 
       | `func´ `(´ [List(ID)] `)´ Block                 ;; function
 
