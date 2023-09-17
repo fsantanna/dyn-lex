@@ -173,15 +173,15 @@ fun Coder.main (tags: Tags): String {
         CEU_Value ceu_dict_create    (CEU_Block* hld);
         CEU_Value ceu_closure_create (CEU_Block* hld, CEU_HOLD tphold, CEU_Frame* frame, CEU_Proto proto, int upvs);
 
-        int ceu_tuple_set (CEU_Tuple* tup, int i, CEU_Value v);
+        CEU_Value ceu_tuple_set (CEU_Tuple* tup, int i, CEU_Value v);
 
         CEU_Value ceu_vector_get (CEU_Vector* vec, int i);
-        int ceu_vector_set (CEU_Vector* vec, int i, CEU_Value v);
+        CEU_Value ceu_vector_set (CEU_Vector* vec, int i, CEU_Value v);
         CEU_Value ceu_vector_from_c_string (CEU_Block* hld, const char* str);
         
         int ceu_dict_key_to_index (CEU_Dict* col, CEU_Value key, int* idx);
         CEU_Value ceu_dict_get (CEU_Dict* col, CEU_Value key);
-        int ceu_dict_set (CEU_Dict* col, CEU_Value key, CEU_Value val);
+        CEU_Value ceu_dict_set (CEU_Dict* col, CEU_Value key, CEU_Value val);
         
         CEU_Value ceu_col_check (CEU_Value col, CEU_Value idx);
 
@@ -286,23 +286,23 @@ fun Coder.main (tags: Tags): String {
             ceu_block_free(blk);
             return ceu_exit(up);
         }
-        void ceu_error1 (CEU_Block* blk, CEU_Value err) {
+        void ceu_ferror (CEU_Block* blk, CEU_Value err) {
             fprintf(stderr, "%s\n", err.Error);
             ceu_exit(blk);
         }
-        void ceu_error2 (CEU_Block* blk, char* pre, CEU_Value err) {
+        void ceu_ferror_pre (CEU_Block* blk, char* pre, CEU_Value err) {
             fprintf(stderr, "%s : %s\n", pre, err.Error);
             ceu_exit(blk);
         }
-        CEU_Value ceu_assert1 (CEU_Block* blk, CEU_Value v) {
+        CEU_Value ceu_assert (CEU_Block* blk, CEU_Value v) {
             if (v.type == CEU_VALUE_ERROR) {
-                ceu_error1(blk, v);
+                ceu_ferror(blk, v);
             }
             return v;
         }
-        CEU_Value ceu_assert2 (CEU_Block* blk, CEU_Value v, char* msg1) {
+        CEU_Value ceu_assert_pre (CEU_Block* blk, CEU_Value v, char* pre) {
             if (v.type == CEU_VALUE_ERROR) {
-                ceu_error2(blk, msg1, v);
+                ceu_ferror_pre(blk, pre, v);
             }
             return v;
         }
@@ -392,7 +392,7 @@ fun Coder.main (tags: Tags): String {
                         CEU_Tags_List* cur = tags;
                         int i = 0;
                         while (cur != NULL) {
-                            assert(ceu_tuple_set(&tup.Dyn->Tuple, i++, (CEU_Value) { CEU_VALUE_TAG, {.Tag=cur->tag} }));
+                            assert(ceu_tuple_set(&tup.Dyn->Tuple, i++, (CEU_Value) { CEU_VALUE_TAG, {.Tag=cur->tag} }).type != CEU_VALUE_ERROR);
                             cur = cur->next;
                         }
                     }                    
@@ -406,7 +406,7 @@ fun Coder.main (tags: Tags): String {
                             tag,
                             (CEU_Value) { CEU_VALUE_TAG, {.Tag=cur->tag} }
                         };
-                        ret = ceu_assert1(frame->up_block, ceu_sup_question__f(frame, 2, args));
+                        ret = ceu_assert(frame->up_block, ceu_sup_question__f(frame, 2, args));
                         if (ret.Bool) {
                             break;
                         }
@@ -596,19 +596,24 @@ fun Coder.main (tags: Tags): String {
             ceu_hold_add(dyn, nxt);
         }
 
-        int ceu_hold_chk_set (CEU_Dyn** dst, int depth, CEU_HOLD type, CEU_Value src) {
+        CEU_Value ceu_hold_chk_set (CEU_Dyn** dst, int depth, CEU_HOLD type, CEU_Value src, char* pre) {
+            static char msg[256];
+            strncpy(msg, pre, 256);
+            CEU_Value err = { CEU_VALUE_ERROR, {.Error=msg} };
             if (src.type < CEU_VALUE_DYNAMIC) {
-                return 1;
+                return (CEU_Value) { CEU_VALUE_NIL };
             } else if (src.Dyn->Any.hld_type == CEU_HOLD_FLEET) {
                 if (src.Dyn->Any.refs>0 && depth>src.Dyn->Any.hld_depth) {
-                    return 0;   // cant move to deeper scope with pending refs
+                    strcat(msg, " : cannot move to deeper scope with pending references");
+                    return err;
                 } else {
                     // continue below
                 }
             } else if (depth >= src.Dyn->Any.hld_depth) {
-                return 1;
+                return (CEU_Value) { CEU_VALUE_NIL };
             } else {
-                return 0;
+                strcat(msg, " : cannot copy reference to outer scope");
+                return err;
             };
 
             int src_depth = src.Dyn->Any.hld_depth;
@@ -619,74 +624,63 @@ fun Coder.main (tags: Tags): String {
                 ceu_hold_chg(src.Dyn, dst, depth);
             }
             if (src.Dyn->Any.hld_type==src_type && depth>=src_depth) {
-                return 1;
+                return (CEU_Value) { CEU_VALUE_NIL };
             }
+            
+            #define CEU_CHECK_ERROR_RETURN(v) { CEU_Value ret=v; if (v.type==CEU_VALUE_ERROR) { return v; } }
 
             switch (src.Dyn->Any.type) {
                 case CEU_VALUE_CLOSURE:
                     for (int i=0; i<src.Dyn->Closure.upvs.its; i++) {
-                        if (!ceu_hold_chk_set(dst, depth, type, src.Dyn->Closure.upvs.buf[i])) {
-                            return 0;
-                        }
+                        CEU_CHECK_ERROR_RETURN(ceu_hold_chk_set(dst, depth, type, src.Dyn->Closure.upvs.buf[i], pre));
                     }
                     break;
                 case CEU_VALUE_TUPLE:
                     for (int i=0; i<src.Dyn->Tuple.its; i++) {
-                        if (!ceu_hold_chk_set(dst, depth, type, src.Dyn->Tuple.buf[i])) {
-                            return 0;
-                        }
+                        CEU_CHECK_ERROR_RETURN(ceu_hold_chk_set(dst, depth, type, src.Dyn->Tuple.buf[i], pre));
                     }
                     break;
                 case CEU_VALUE_VECTOR:
                     for (int i=0; i<src.Dyn->Vector.its; i++) {
-                        if (!ceu_hold_chk_set(dst, depth, type, ceu_vector_get(&src.Dyn->Vector,i))) {
-                            return 0;
-                        }
+                        CEU_CHECK_ERROR_RETURN(ceu_hold_chk_set(dst, depth, type, ceu_vector_get(&src.Dyn->Vector,i), pre));
                     }
                     break;
                 case CEU_VALUE_DICT:
                     for (int i=0; i<src.Dyn->Dict.max; i++) {
-                        if (!ceu_hold_chk_set(dst, depth, type, (*src.Dyn->Dict.buf)[i][0])) {
-                            return 0;
-                        }
-                        if (!ceu_hold_chk_set(dst, depth, type, (*src.Dyn->Dict.buf)[i][1])) {
-                            return 0;
-                        }
+                        CEU_CHECK_ERROR_RETURN(ceu_hold_chk_set(dst, depth, type, (*src.Dyn->Dict.buf)[i][0], pre));
+                        CEU_CHECK_ERROR_RETURN(ceu_hold_chk_set(dst, depth, type, (*src.Dyn->Dict.buf)[i][1], pre));
                     }
                     break;
             }
-            return 1;
+            return (CEU_Value) { CEU_VALUE_NIL };
         }
         
-        int ceu_hold_chk_set_col (CEU_Dyn* col, CEU_Value v) {
+        CEU_Value ceu_hold_chk_set_col (CEU_Dyn* col, CEU_Value v) {
             if (v.type < CEU_VALUE_DYNAMIC) {
-                return 1;
+                return (CEU_Value) { CEU_VALUE_NIL };
             }
             
             // col affects v:
             // [x,[1]] <-- moves v=[1] to v
-            if (
-                ceu_hold_chk_set(&col->Any.hld_next, col->Any.hld_depth, col->Any.hld_type, v) ||
-                (col->Any.hld_type == CEU_HOLD_FLEET) // must be second b/c chk_set above may modify v
-            ) {
-                // ok
-            } else {
-                return 0;
+            CEU_Value err = ceu_hold_chk_set(&col->Any.hld_next, col->Any.hld_depth, col->Any.hld_type, v, "set error");
+            if (err.type==CEU_VALUE_ERROR && col->Any.hld_type!=CEU_HOLD_FLEET) {
+                // must be second b/c chk_set above may modify v
+                return err;
             }
                      
             // v affects fleeting col with innermost scope
             if (col->Any.hld_type == CEU_HOLD_FLEET) {
                 if (v.Dyn->Any.hld_depth < col->Any.hld_depth) {
-                    return 1;
+                    return (CEU_Value) { CEU_VALUE_NIL };
                 } else {
                     col->Any.hld_type = MAX(col->Any.hld_type, MIN(CEU_HOLD_FLEET,v.Dyn->Any.hld_type));
                     if (v.Dyn->Any.hld_depth > col->Any.hld_depth) {
                         ceu_hold_chg(col, v.Dyn->Any.hld_prev, v.Dyn->Any.hld_depth);
                     }
-                    return 1;
+                    return (CEU_Value) { CEU_VALUE_NIL };
                 }
             } else {
-                return 1;
+                return (CEU_Value) { CEU_VALUE_NIL };
             }
         }
 
@@ -793,7 +787,7 @@ fun Coder.main (tags: Tags): String {
             }
         }
         
-        int ceu_tuple_set (CEU_Tuple* tup, int i, CEU_Value v) {
+        CEU_Value ceu_tuple_set (CEU_Tuple* tup, int i, CEU_Value v) {
             ceu_gc_inc(v);
             ceu_gc_dec(tup->buf[i], 1);
             tup->buf[i] = v;
@@ -810,17 +804,19 @@ fun Coder.main (tags: Tags): String {
             return ret;
         }
         
-        int ceu_vector_set (CEU_Vector* vec, int i, CEU_Value v) {
+        CEU_Value ceu_vector_set (CEU_Vector* vec, int i, CEU_Value v) {
             if (v.type == CEU_VALUE_NIL) {           // pop
                 assert(i == vec->its-1);
                 CEU_Value ret = ceu_vector_get(vec, i);
                 assert(ret.type != CEU_VALUE_ERROR);
                 ceu_gc_dec(ret, 1);
                 vec->its--;
-                return 1;
-            } else if (!ceu_hold_chk_set_col((CEU_Dyn*)vec, v)) {
-                return 0;
+                return ret;
             } else {
+                CEU_Value err = ceu_hold_chk_set_col((CEU_Dyn*)vec, v);
+                if (err.type == CEU_VALUE_ERROR) {
+                    return err;
+                }
                 if (vec->its == 0) {
                     vec->unit = v.type;
                 } else {
@@ -844,7 +840,7 @@ fun Coder.main (tags: Tags): String {
                     assert(i < vec->its);
                 }
                 memcpy(vec->buf + i*sz, (char*)&v.Number, sz);
-                return 1;
+                return (CEU_Value) { CEU_VALUE_NIL };
             }
         }
         
@@ -852,7 +848,7 @@ fun Coder.main (tags: Tags): String {
             CEU_Value vec = ceu_vector_create(hld);
             int N = strlen(str);
             for (int i=0; i<N; i++) {
-                assert(ceu_vector_set(&vec.Dyn->Vector, vec.Dyn->Vector.its, (CEU_Value) { CEU_VALUE_CHAR, {.Char=str[i]} }));
+                assert(ceu_vector_set(&vec.Dyn->Vector, vec.Dyn->Vector.its, (CEU_Value) { CEU_VALUE_CHAR, {.Char=str[i]} }).type != CEU_VALUE_ERROR);
             }
             return vec;
         }
@@ -901,7 +897,7 @@ fun Coder.main (tags: Tags): String {
                 return (CEU_Value) { CEU_VALUE_NIL };
             }
         }        
-        int ceu_dict_set (CEU_Dict* col, CEU_Value key, CEU_Value val) {
+        CEU_Value ceu_dict_set (CEU_Dict* col, CEU_Value key, CEU_Value val) {
             //assert(key.type != CEU_VALUE_NIL);     // TODO
             int old;
             ceu_dict_key_to_index(col, key, &old);
@@ -921,12 +917,17 @@ fun Coder.main (tags: Tags): String {
                 ceu_gc_dec(vv, 1);
                 ceu_gc_dec(key, 1);
                 (*col->buf)[old][0] = (CEU_Value) { CEU_VALUE_NIL };
-                return 1;
-            } else if (!ceu_hold_chk_set_col((CEU_Dyn*)col, key)) {
-                return 0;
-            } else if (!ceu_hold_chk_set_col((CEU_Dyn*)col, val)) {
-                return 0;
+                return (CEU_Value) { CEU_VALUE_NIL };
             } else {
+                CEU_Value err1 = ceu_hold_chk_set_col((CEU_Dyn*)col, key);
+                if (err1.type == CEU_VALUE_ERROR) {
+                    return err1;
+                }
+                CEU_Value err2 = ceu_hold_chk_set_col((CEU_Dyn*)col, val);
+                if (err2.type == CEU_VALUE_ERROR) {
+                    return err2;
+                }
+
                 ceu_gc_inc(val);
                 ceu_gc_dec(vv, 1);
                 if (vv.type == CEU_VALUE_NIL) {
@@ -934,7 +935,7 @@ fun Coder.main (tags: Tags): String {
                 }
                 (*col->buf)[old][0] = key;
                 (*col->buf)[old][1] = val;
-                return 1;
+                return (CEU_Value) { CEU_VALUE_NIL };
             }
         }        
         

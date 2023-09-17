@@ -481,7 +481,7 @@ class TExec {
             println(f(3))
         """, true
         )
-        assert(out == "anon : (lin 3, col 30) : block escape error : incompatible scopes\n") { out }
+        assert(out == "anon : (lin 3, col 30) : block escape error : cannot copy reference to outer scope\n") { out }
     }
     @Test
     fun cc_tuple8_hold_err() {
@@ -499,7 +499,7 @@ class TExec {
             println(f(3))
         """, true
         )
-        assert(out == "anon : (lin 4, col 26) : block escape error : incompatible scopes\n") { out }
+        assert(out == "anon : (lin 4, col 26) : block escape error : cannot copy reference to outer scope\n") { out }
     }
     @Test
     fun cc_tuple9_hold_err() {
@@ -514,7 +514,7 @@ class TExec {
         """
         )
         //assert(out == "1\n") { out }
-        assert(out == "anon : (lin 2, col 13) : block escape error : incompatible scopes\n") { out }
+        assert(out == "anon : (lin 2, col 13) : block escape error : cannot copy reference to outer scope\n") { out }
     }
     @Test
     fun cc_tuple10_hold_err() {
@@ -530,7 +530,7 @@ class TExec {
         //assert(out == "anon : (lin 2, col 21) : set error : incompatible scopes\n") { out }
         //assert(out == "anon : (lin 5, col 17) : return error : incompatible scopes\n") { out }
         //assert(out == "anon : (lin 2, col 21) : set error : incompatible scopes\n") { out }
-        assert(out == "anon : (lin 2, col 21) : block escape error : incompatible scopes\n") { out }
+        assert(out == "anon : (lin 2, col 21) : block escape error : cannot copy reference to outer scope\n") { out }
     }
     @Test
     fun cc_tuple14_drop_out() {
@@ -843,7 +843,7 @@ class TExec {
                 println(t1)
             }
         """)
-        assert(out == "anon : (lin 6, col 21) : declaration error : incompatible scopes\n") { out }
+        assert(out == "anon : (lin 6, col 21) : declaration error : cannot move to deeper scope with pending references\n") { out }
     }
     @Test
     fun cc_13_drop_cycle() {
@@ -1015,7 +1015,7 @@ class TExec {
             println(v)
         """
         )
-        assert(out == "anon : (lin 5, col 21) : set error : incompatible scopes\n" +
+        assert(out == "anon : (lin 5, col 21) : set error : cannot copy reference to outer scope\n" +
                 "") { out }
     }
     @Test
@@ -1028,7 +1028,7 @@ class TExec {
                 ]),
                 (:right, 3)
             ]
-            
+
             val tree2 = @[
                 left= @[
                     left=1,
@@ -1444,7 +1444,7 @@ class TExec {
         )
         //assert(out == "anon : (lin 3, col 13) : set error : incompatible scopes\n") { out }
         //assert(out == "anon : (lin 6, col 21) : set error : incompatible scopes\n") { out }
-        assert(out == "anon : (lin 6, col 21) : set error : incompatible scopes\n") { out }
+        assert(out == "anon : (lin 6, col 21) : set error : cannot copy reference to outer scope\n") { out }
     }
     @Test
     fun scope4() {
@@ -1494,7 +1494,7 @@ class TExec {
         """
         )
         //assert(out == "anon : (lin 7, col 21) : set error : incompatible scopes\n") { out }
-        assert(out == "anon : (lin 7, col 21) : set error : incompatible scopes\n") { out }
+        assert(out == "anon : (lin 7, col 21) : set error : cannot copy reference to outer scope\n") { out }
     }
     @Test
     fun scope6() {
@@ -1583,7 +1583,7 @@ class TExec {
             }
         """
         )
-        assert(out == "anon : (lin 6, col 21) : set error : incompatible scopes\n") { out }
+        assert(out == "anon : (lin 6, col 21) : set error : cannot copy reference to outer scope\n") { out }
     }
     @Test
     fun scope10_err() {
@@ -1598,7 +1598,7 @@ class TExec {
             println(1)
         """
         )
-        assert(out == "anon : (lin 6, col 21) : set error : incompatible scopes\n") { out }
+        assert(out == "anon : (lin 6, col 21) : set error : cannot copy reference to outer scope\n") { out }
     }
     @Test
     fun scope11_err() {
@@ -1613,7 +1613,7 @@ class TExec {
             println(1)
         """
         )
-        assert(out == "anon : (lin 6, col 21) : set error : incompatible scopes\n") { out }
+        assert(out == "anon : (lin 6, col 21) : set error : cannot copy reference to outer scope\n") { out }
     }
     @Test
     fun scope12_err() {
@@ -1628,7 +1628,7 @@ class TExec {
             println(1)
         """
         )
-        assert(out == "anon : (lin 6, col 21) : set error : incompatible scopes\n") { out }
+        assert(out == "anon : (lin 6, col 21) : set error : cannot copy reference to outer scope\n") { out }
     }
     @Test
     fun scope13_tuple() {
@@ -1641,7 +1641,7 @@ class TExec {
             println(v)
         """, true
         )
-        assert(out == "anon : (lin 2, col 21) : block escape error : incompatible scopes\n" +
+        assert(out == "anon : (lin 2, col 21) : block escape error : cannot copy reference to outer scope\n" +
                 "") { out }
     }
     @Test
@@ -1756,7 +1756,7 @@ class TExec {
             println(:ok)
         """
         )
-        assert(out == "anon : (lin 4, col 17) : block escape error : incompatible scopes\n") { out }
+        assert(out == "anon : (lin 4, col 17) : block escape error : cannot copy reference to outer scope\n") { out }
     }
     @Test
     fun scope19_leak() {
@@ -1817,7 +1817,7 @@ class TExec {
             }
         """
         )
-        assert(out == "anon : (lin 5, col 21) : set error : incompatible scopes\n") { out }
+        assert(out == "anon : (lin 5, col 21) : set error : cannot copy reference to outer scope\n") { out }
     }
     @Test
     fun scope22b_vec() {
@@ -1831,7 +1831,7 @@ class TExec {
             }
         """
         )
-        assert(out == "anon : (lin 5, col 21) : set error : incompatible scopes\n") { out }
+        assert(out == "anon : (lin 5, col 21) : set error : cannot copy reference to outer scope\n") { out }
     }
     @Test
     fun scope22c_dic() {
@@ -1845,7 +1845,7 @@ class TExec {
             }
         """
         )
-        assert(out == "anon : (lin 5, col 21) : set error : incompatible scopes\n") { out }
+        assert(out == "anon : (lin 5, col 21) : set error : cannot copy reference to outer scope\n") { out }
     }
     @Test
     fun scope22d_dic() {
@@ -1859,7 +1859,7 @@ class TExec {
             }
         """
         )
-        assert(out == "anon : (lin 5, col 21) : set error : incompatible scopes\n") { out }
+        assert(out == "anon : (lin 5, col 21) : set error : cannot copy reference to outer scope\n") { out }
     }
     @Test
     fun scope22x_dict() {
@@ -1877,7 +1877,7 @@ class TExec {
             println(:ok)
         """
         )
-        assert(out == "anon : (lin 7, col 25) : set error : incompatible scopes\n") { out }
+        assert(out == "anon : (lin 7, col 25) : set error : cannot copy reference to outer scope\n") { out }
     }
     @Test
     fun scope22y_dict() {
@@ -1893,7 +1893,7 @@ class TExec {
             println(:ok)
         """
         )
-        assert(out == "anon : (lin 6, col 21) : set error : incompatible scopes\n") { out }
+        assert(out == "anon : (lin 6, col 21) : set error : cannot copy reference to outer scope\n") { out }
     }
     @Test
     fun scope22z_dict() {
@@ -1979,7 +1979,7 @@ class TExec {
             println(y)
         """
         )
-        assert(out == "anon : (lin 5, col 21) : block escape error : incompatible scopes\n") { out }
+        assert(out == "anon : (lin 5, col 21) : block escape error : cannot copy reference to outer scope\n") { out }
     }
     @Test
     fun scope27_glb_vs_tup() {
@@ -1995,7 +1995,7 @@ class TExec {
             println(f([nil]))
         """
         )
-        assert(out == "anon : (lin 2, col 30) : block escape error : incompatible scopes\n") { out }
+        assert(out == "anon : (lin 2, col 30) : block escape error : cannot copy reference to outer scope\n") { out }
     }
     @Test
     fun scope28() {
@@ -2011,7 +2011,7 @@ class TExec {
             println(g)
         """
         )
-        assert(out == "anon : (lin 5, col 21) : block escape error : incompatible scopes\n") { out }
+        assert(out == "anon : (lin 5, col 21) : block escape error : cannot copy reference to outer scope\n") { out }
     }
     @Test
     fun scope29() {
@@ -2420,7 +2420,7 @@ class TExec {
             println(f(t[0]))        ;; 1
             println(f([[nil]][0]))  ;; err
         """)
-        assert(out == "anon : (lin 2, col 30) : argument error : incompatible scopes\n1\n") { out }
+        assert(out == "anon : (lin 2, col 30) : argument error : cannot move to deeper scope with pending references\n1\n") { out }
     }
 
     // FUNC / ARGS / DOTS / ...
@@ -3548,7 +3548,7 @@ class TExec {
             println(f(10))
         """
         )
-        assert(out == "anon : (lin 3, col 21) : block escape error : incompatible scopes\n" +
+        assert(out == "anon : (lin 3, col 21) : block escape error : cannot copy reference to outer scope\n" +
                 "") { out }
     }
     @Test
@@ -3564,7 +3564,7 @@ class TExec {
             println(f(10)())
         """
         )
-        assert(out == "anon : (lin 3, col 30) : block escape error : incompatible scopes\n") { out }
+        assert(out == "anon : (lin 3, col 30) : block escape error : cannot copy reference to outer scope\n") { out }
     }
     @Test
     fun clo13_err() {
@@ -3723,7 +3723,7 @@ class TExec {
             println(g())
         """
         )
-        assert(out == "anon : (lin 7, col 21) : block escape error : incompatible scopes\n" +
+        assert(out == "anon : (lin 7, col 21) : block escape error : cannot copy reference to outer scope\n" +
                 "") { out }
     }
     @Test
@@ -3737,7 +3737,7 @@ class TExec {
             println(:ok)
         """
         )
-        assert(out == "anon : (lin 2, col 13) : block escape error : incompatible scopes\n" +
+        assert(out == "anon : (lin 2, col 13) : block escape error : cannot copy reference to outer scope\n" +
                 "") { out }
     }
     @Test
@@ -3756,7 +3756,7 @@ class TExec {
             println(g())
         """
         )
-        assert(out == "anon : (lin 7, col 21) : block escape error : incompatible scopes\n" +
+        assert(out == "anon : (lin 7, col 21) : block escape error : cannot copy reference to outer scope\n" +
                 "") { out }
     }
     @Test
@@ -3964,7 +3964,7 @@ class TExec {
             println(out)
         """, true
         )
-        assert(out == "anon : (lin 3, col 23) : block escape error : incompatible scopes\n" +
+        assert(out == "anon : (lin 3, col 23) : block escape error : cannot copy reference to outer scope\n" +
                 "") { out }
     }
     @Test
