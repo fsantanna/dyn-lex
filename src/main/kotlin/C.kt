@@ -603,7 +603,7 @@ fun Coder.main (tags: Tags): String {
             if (src.type < CEU_VALUE_DYNAMIC) {
                 return (CEU_Value) { CEU_VALUE_NIL };
             } else if (src.Dyn->Any.hld_type == CEU_HOLD_FLEET) {
-                if (src.Dyn->Any.refs>0 && depth>src.Dyn->Any.hld_depth) {
+                if (src.Dyn->Any.refs-nest>0 && depth>src.Dyn->Any.hld_depth) {
                     strcat(msg, " : cannot move to deeper scope with pending references");
                     return err;
                 } else {

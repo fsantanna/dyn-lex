@@ -2120,7 +2120,7 @@ class TExec {
             f([[1]])
         """)
         //assert(out == "[1]\n") { out }
-        assert(out == "anon : (lin 3, col 17) : declaration error : incompatible scopes\n") { out }
+        assert(out == "anon : (lin 3, col 17) : declaration error : cannot move to deeper scope with pending references\n") { out }
     }
 
     // IF
