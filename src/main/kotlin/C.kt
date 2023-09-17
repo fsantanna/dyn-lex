@@ -596,7 +596,7 @@ fun Coder.main (tags: Tags): String {
             ceu_hold_add(dyn, nxt);
         }
 
-        CEU_Value ceu_hold_chk_set (CEU_Dyn** dst, int depth, CEU_HOLD type, CEU_Value src, char* pre) {
+        CEU_Value ceu_hold_chk_set (CEU_Dyn** dst, int depth, CEU_HOLD type, CEU_Value src, int nest, char* pre) {
             static char msg[256];
             strncpy(msg, pre, 256);
             CEU_Value err = { CEU_VALUE_ERROR, {.Error=msg} };
@@ -632,23 +632,23 @@ fun Coder.main (tags: Tags): String {
             switch (src.Dyn->Any.type) {
                 case CEU_VALUE_CLOSURE:
                     for (int i=0; i<src.Dyn->Closure.upvs.its; i++) {
-                        CEU_CHECK_ERROR_RETURN(ceu_hold_chk_set(dst, depth, type, src.Dyn->Closure.upvs.buf[i], pre));
+                        CEU_CHECK_ERROR_RETURN(ceu_hold_chk_set(dst, depth, type, src.Dyn->Closure.upvs.buf[i], 1, pre));
                     }
                     break;
                 case CEU_VALUE_TUPLE:
                     for (int i=0; i<src.Dyn->Tuple.its; i++) {
-                        CEU_CHECK_ERROR_RETURN(ceu_hold_chk_set(dst, depth, type, src.Dyn->Tuple.buf[i], pre));
+                        CEU_CHECK_ERROR_RETURN(ceu_hold_chk_set(dst, depth, type, src.Dyn->Tuple.buf[i], 1, pre));
                     }
                     break;
                 case CEU_VALUE_VECTOR:
                     for (int i=0; i<src.Dyn->Vector.its; i++) {
-                        CEU_CHECK_ERROR_RETURN(ceu_hold_chk_set(dst, depth, type, ceu_vector_get(&src.Dyn->Vector,i), pre));
+                        CEU_CHECK_ERROR_RETURN(ceu_hold_chk_set(dst, depth, type, ceu_vector_get(&src.Dyn->Vector,i), 1, pre));
                     }
                     break;
                 case CEU_VALUE_DICT:
                     for (int i=0; i<src.Dyn->Dict.max; i++) {
-                        CEU_CHECK_ERROR_RETURN(ceu_hold_chk_set(dst, depth, type, (*src.Dyn->Dict.buf)[i][0], pre));
-                        CEU_CHECK_ERROR_RETURN(ceu_hold_chk_set(dst, depth, type, (*src.Dyn->Dict.buf)[i][1], pre));
+                        CEU_CHECK_ERROR_RETURN(ceu_hold_chk_set(dst, depth, type, (*src.Dyn->Dict.buf)[i][0], 1, pre));
+                        CEU_CHECK_ERROR_RETURN(ceu_hold_chk_set(dst, depth, type, (*src.Dyn->Dict.buf)[i][1], 1, pre));
                     }
                     break;
             }
@@ -662,7 +662,7 @@ fun Coder.main (tags: Tags): String {
             
             // col affects v:
             // [x,[1]] <-- moves v=[1] to v
-            CEU_Value err = ceu_hold_chk_set(&col->Any.hld_next, col->Any.hld_depth, col->Any.hld_type, v, "set error");
+            CEU_Value err = ceu_hold_chk_set(&col->Any.hld_next, col->Any.hld_depth, col->Any.hld_type, v, 0, "set error");
             if (err.type==CEU_VALUE_ERROR && col->Any.hld_type!=CEU_HOLD_FLEET) {
                 // must be second b/c chk_set above may modify v
                 return err;

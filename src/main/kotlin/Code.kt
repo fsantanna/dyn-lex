@@ -150,7 +150,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                                     if ($i < ceu_n) {
                                         ceu_assert_pre(
                                             ceu_block_$n,
-                                            ceu_hold_chk_set(&ceu_block_$n->dyns, ceu_block_$n->depth, CEU_HOLD_FLEET, ceu_args[$i], "argument error"),
+                                            ceu_hold_chk_set(&ceu_block_$n->dyns, ceu_block_$n->depth, CEU_HOLD_FLEET, ceu_args[$i], 0, "argument error"),
                                             "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})"
                                         );
                                         $idc = ceu_args[$i];
@@ -189,7 +189,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                             // move up dynamic ceu_acc (return or error)
                             ceu_assert_pre(
                                 ceu_block_$n, 
-                                ceu_hold_chk_set(&$up1->dyns, $up1->depth, CEU_HOLD_FLEET, ceu_acc, "block escape error"),
+                                ceu_hold_chk_set(&$up1->dyns, $up1->depth, CEU_HOLD_FLEET, ceu_acc, 0, "block escape error"),
                                 "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})"
                             );
                             """
@@ -230,7 +230,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     this.src!!.code() + (!this.tmp).cond { """
                         ceu_assert_pre(
                             $bupc,
-                            ceu_hold_chk_set(&$bupc->dyns, $bupc->depth, CEU_HOLD_MUTAB, ceu_acc, "declaration error"),
+                            ceu_hold_chk_set(&$bupc->dyns, $bupc->depth, CEU_HOLD_MUTAB, ceu_acc, 0, "declaration error"),
                             "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})"
                         );
                     """ }
@@ -310,7 +310,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         { // ACC - SET
                             ceu_assert_pre(
                                 $bupc,
-                                ceu_hold_chk_set(&${_idc_}->dyns, ${_idc_}->depth, CEU_HOLD_MUTAB, $src, "set error"),
+                                ceu_hold_chk_set(&${_idc_}->dyns, ${_idc_}->depth, CEU_HOLD_MUTAB, $src, 0, "set error"),
                                 "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})"
                             );
                             ceu_gc_inc($src);
