@@ -627,7 +627,7 @@ fun Coder.main (tags: Tags): String {
                 return (CEU_Value) { CEU_VALUE_NIL };
             }
             
-            #define CEU_CHECK_ERROR_RETURN(v) { CEU_Value ret=v; if (v.type==CEU_VALUE_ERROR) { return v; } }
+            #define CEU_CHECK_ERROR_RETURN(v) { CEU_Value ret=v; if (ret.type==CEU_VALUE_ERROR) { return ret; } }
 
             switch (src.Dyn->Any.type) {
                 case CEU_VALUE_CLOSURE:
