@@ -950,47 +950,6 @@ class TExec {
         assert(out == "@[(:x,1),(:y,2)]\n") { out }
     }
     @Test
-    fun dd_dict9_next() {
-        val out = all(
-            """
-            val t = @[]
-            set t[:x] = 1
-            set t[:y] = 2
-            var k
-            set k = next(t)
-            println(k, t[k])
-            set k = next(t,k)
-            println(k, t[k])
-            set k = next(t,k)
-            println(k, t[k])
-        """
-        )
-        assert(out == ":x\t1\n:y\t2\nnil\tnil\n") { out }
-    }
-    @Test
-    fun dd_dict10_next() {
-        val out = all(
-            """
-            val t = @[]
-            set t[:x] = 1
-            set t[:y] = 2
-            set t[:z] = 3
-            set t[:y] = nil
-            set t[:x] = nil
-            set t[:a] = 10
-            set t[:b] = 20
-            set t[:c] = 30
-            var k = next(t)
-            loop {
-                break if (k == nil)
-                println(k, t[k])
-                set k = next(t,k)
-            }
-        """
-        )
-        assert(out == ":a\t10\n:b\t20\n:z\t3\n:c\t30\n") { out }
-    }
-    @Test
     fun dd_11_dict_set() {
         val out = all(
             """
@@ -1042,6 +1001,63 @@ class TExec {
         assert(out == "@[(:left,@[(:left,1),(:right,2)]),(:right,3)]\n" +
                 "@[(:left,@[(:left,1),(:right,2)]),(:right,3)]\n") { out }
     }
+
+    // DICT / NEXT
+
+    @Test
+    fun ee_0x_dict_next() {
+        val out = all(
+            """
+            val t = @[]
+            println(t[nil])
+            set t[nil] = 1
+        """
+        )
+        assert(out == "anon : (lin 4, col 17) : dict error : index cannot be nil\n" +
+                "nil\n") { out }
+    }
+    @Test
+    fun ee_02_dict_next() {
+        val out = all(
+            """
+            val t = @[]
+            set t[:x] = 1
+            set t[:y] = 2
+            var k
+            set k = next(t)
+            println(k, t[k])
+            set k = next(t,k)
+            println(k, t[k])
+            set k = next(t,k)
+            println(k, t[k])
+        """
+        )
+        assert(out == ":x\t1\n:y\t2\nnil\tnil\n") { out }
+    }
+    @Test
+    fun ee_03_dict_next() {
+        val out = all(
+            """
+            val t = @[]
+            set t[:x] = 1
+            set t[:y] = 2
+            set t[:z] = 3
+            set t[:y] = nil
+            set t[:x] = nil
+            set t[:a] = 10
+            set t[:b] = 20
+            set t[:c] = 30
+            var k = next(t)
+            loop {
+                break if (k == nil)
+                println(k, t[k])
+                set k = next(t,k)
+            }
+        """
+        )
+        assert(out == ":a\t10\n:b\t20\n:z\t3\n:c\t30\n") { out }
+    }
+
 
     // VECTOR
 
