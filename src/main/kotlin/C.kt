@@ -598,22 +598,22 @@ fun Coder.main (tags: Tags): String {
 
         CEU_Value ceu_hold_chk_set (CEU_Dyn** dst, int depth, CEU_HOLD type, CEU_Value src, int nest, char* pre) {
             static char msg[256];
-            strncpy(msg, pre, 256);
-            CEU_Value err = { CEU_VALUE_ERROR, {.Error=msg} };
             if (src.type < CEU_VALUE_DYNAMIC) {
                 return (CEU_Value) { CEU_VALUE_NIL };
             } else if (src.Dyn->Any.hld_type == CEU_HOLD_FLEET) {
                 if (src.Dyn->Any.refs-nest>0 && depth>src.Dyn->Any.hld_depth) {
+                    strncpy(msg, pre, 256);
                     strcat(msg, " : cannot move to deeper scope with pending references");
-                    return err;
+                    return (CEU_Value) { CEU_VALUE_ERROR, {.Error=msg} };
                 } else {
                     // continue below
                 }
             } else if (depth >= src.Dyn->Any.hld_depth) {
                 return (CEU_Value) { CEU_VALUE_NIL };
             } else {
+                strncpy(msg, pre, 256);
                 strcat(msg, " : cannot copy reference to outer scope");
-                return err;
+                return (CEU_Value) { CEU_VALUE_ERROR, {.Error=msg} };
             };
 
             int src_depth = src.Dyn->Any.hld_depth;
