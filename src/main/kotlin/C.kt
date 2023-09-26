@@ -856,7 +856,9 @@ fun Coder.main (tags: Tags): String {
         CEU_Value ceu_next_f (CEU_Frame* _1, int n, CEU_Value args[]) {
             assert(n==1 || n==2);
             CEU_Value col = args[0];
-            assert(col.type == CEU_VALUE_DICT);
+            if (col.type != CEU_VALUE_DICT) {
+                return (CEU_Value) { CEU_VALUE_ERROR, {.Error="next error : expected dict"} };
+            }
             CEU_Value key = (n == 1) ? ((CEU_Value) { CEU_VALUE_NIL }) : args[1];
             if (key.type == CEU_VALUE_NIL) {
                 return (*col.Dyn->Dict.buf)[0][0];

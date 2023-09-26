@@ -1005,7 +1005,7 @@ class TExec {
     // DICT / NEXT
 
     @Test
-    fun ee_0x_dict_next() {
+    fun ee_01_dict_next() {
         val out = all(
             """
             val t = @[]
@@ -1057,7 +1057,13 @@ class TExec {
         )
         assert(out == ":a\t10\n:b\t20\n:z\t3\n:c\t30\n") { out }
     }
-
+    @Test
+    fun ee_04_dict_next() {
+        val out = all("""
+            next(nil)
+        """)
+        assert(out == "anon : (lin 2, col 13) : call error : next error : expected dict\n") { out }
+    }
 
     // VECTOR
 
