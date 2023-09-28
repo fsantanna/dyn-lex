@@ -80,7 +80,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         val upv = min(2, btw)
                         """
                         {
-                            CEU_Value ceu_up = ${vars.id2c(dcl, upv).first};
+                            CEU_Value ceu_up = ${vars.id2c(dcl, upv)};
                             assert(ceu_hold_chk_set_col(ceu_ret_$n.Dyn, ceu_up).type != CEU_VALUE_ERROR);
                             ceu_gc_inc(ceu_up);
                             ((CEU_Proto_Upvs_$n*)ceu_ret_$n.Dyn->Closure.upvs.buf)->${idc} = ceu_up;
@@ -146,7 +146,6 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                                 ${f_b.args.filter { it.first.str!="..." }.mapIndexed { i,arg ->
                                     val idc = arg.first.str.id2c()
                                     """
-                                    _${idc}_ = ceu_block_$n;
                                     if ($i < ceu_n) {
                                         ceu_assert_pre(
                                             ceu_block_$n,
@@ -175,7 +174,6 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         }}
                         ${dcls.filter { it != "_" }.map { """
                             CEU_Value $it = (CEU_Value) { CEU_VALUE_NIL };
-                            CEU_Block* _${it}_ = NULL;
                         """ }.joinToString("")}
                         ${(f_b == null).cond{ pres.joinToString("") }}
                         
@@ -242,8 +240,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         (this.src == null) -> ""
                         else -> "$idc = ceu_acc;"
                     }}
-                    _${idc}_ = $bupc;
-                    ceu_gc_inc(${idc});
+                    ceu_gc_inc($idc);
                     ceu_acc = $idc;
                     """
                 }}
@@ -296,8 +293,9 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 }
             }
             is Expr.Acc -> {
-                val (_,dcl) = vars.get(this)
-                val (idc,_idc_) = vars.id2c(dcl, this.tk_.upv)
+                val (blk,dcl) = vars.get(this)
+                val blkc = blk.toc()
+                val idc = vars.id2c(dcl, this.tk_.upv)
                 when {
                     this.isdst() -> {
                         val bupc = ups.first_block(this)!!.toc()
@@ -310,7 +308,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         { // ACC - SET
                             ceu_assert_pre(
                                 $bupc,
-                                ceu_hold_chk_set(&${_idc_}->dyns, ${_idc_}->depth, CEU_HOLD_MUTAB, $src, 0, "set error"),
+                                ceu_hold_chk_set(&$blkc->dyns, $blkc->depth, CEU_HOLD_MUTAB, $src, 0, "set error"),
                                 "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})"
                             );
                             ceu_gc_inc($src);
@@ -519,7 +517,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 val has_dots = (dots!=null && dots is Expr.Acc && dots.tk.str=="...") && !this.closure.let { it is Expr.Acc && it.tk.str=="{{#}}" }
                 val id_dots = if (!has_dots) "" else {
                     val (blk,dcl) = vars.get(dots as Expr.Acc)
-                    vars.id2c(dcl, 0).first
+                    vars.id2c(dcl, 0)
                 }
                 //println(listOf(id_dots,has_dots,(dots!=null && dots is Expr.Acc && dots.tk.str=="..."),dots))
 

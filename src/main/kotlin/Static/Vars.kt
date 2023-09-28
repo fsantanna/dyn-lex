@@ -87,12 +87,12 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
         return blk_to_dcls[blk]!!.findLast { it.id.str == id }!!
     }
 
-    fun id2c (dcl: Expr.Dcl, upv: Int): Pair<String,String> {
+    fun id2c (dcl: Expr.Dcl, upv: Int): String {
         val idc = dcl.id.str.id2c()
         return if (upv == 2) {
-            Pair("(ceu_upvs->$idc)", "(ceu_upvs->_${idc}_)")
+            "(ceu_upvs->$idc)"
         } else {
-            Pair(idc, "_${idc}_")
+            idc
         }
     }
 
@@ -235,8 +235,7 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
                                 err(tk, "native error : (lin $l, col $c) : invalid identifier")
                             }
                             val dcl = find(this, id, 0)
-                            val (idx,_) = id2c(dcl, 0)
-                            "($idx)$no"
+                            "(${id2c(dcl, 0)})$no"
                         }
                     }
                     ret
