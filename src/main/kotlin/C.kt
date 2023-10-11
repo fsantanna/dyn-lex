@@ -711,8 +711,7 @@ fun Coder.main (tags: Tags): String {
             switch (src.type) {
                 case CEU_VALUE_CLOSURE:
                     for (int i=0; i<dyn->Closure.upvs.its; i++) {
-                        CEU_Value args[1] = { dyn->Closure.upvs.buf[i] };
-                        CEU_Value ret = ceu_drop_f(frame, 1, args);
+                        CEU_Value ret = ceu_drop_f(frame, 1, &dyn->Closure.upvs.buf[i]);
                         if (ret.type == CEU_VALUE_ERROR) {
                             return ret;
                         }
@@ -720,8 +719,7 @@ fun Coder.main (tags: Tags): String {
                     break;
                 case CEU_VALUE_TUPLE: {
                     for (int i=0; i<dyn->Tuple.its; i++) {
-                        CEU_Value args[1] = { dyn->Tuple.buf[i] };
-                        CEU_Value ret = ceu_drop_f(frame, 1, args);
+                        CEU_Value ret = ceu_drop_f(frame, 1, &dyn->Tuple.buf[i]);
                         if (ret.type == CEU_VALUE_ERROR) {
                             return ret;
                         }
@@ -742,13 +740,11 @@ fun Coder.main (tags: Tags): String {
                 }
                 case CEU_VALUE_DICT: {
                     for (int i=0; i<dyn->Dict.max; i++) {
-                        CEU_Value args0[1] = { (*dyn->Dict.buf)[i][0] };
-                        CEU_Value ret0 = ceu_drop_f(frame, 1, args0);
+                        CEU_Value ret0 = ceu_drop_f(frame, 1, &(*dyn->Dict.buf)[i][0]);
                         if (ret0.type == CEU_VALUE_ERROR) {
                             return ret0;
                         }
-                        CEU_Value args1[1] = { (*dyn->Dict.buf)[i][1] };
-                        CEU_Value ret1 = ceu_drop_f(frame, 1, args1);
+                        CEU_Value ret1 = ceu_drop_f(frame, 1, &(*dyn->Dict.buf)[i][1]);
                         if (ret1.type == CEU_VALUE_ERROR) {
                             return ret1;
                         }
@@ -1025,8 +1021,7 @@ fun Coder.main (tags: Tags): String {
         void ceu_print1 (CEU_Frame* _1, CEU_Value v) {
             // no tags when _1==NULL (ceu_error_list_print)
             if (_1!=NULL && v.type>CEU_VALUE_DYNAMIC) {  // TAGS
-                CEU_Value args[1] = { v };
-                CEU_Value tup = ceu_tags_f(_1, 1, args);
+                CEU_Value tup = ceu_tags_f(_1, 1, &v);
                 assert(tup.type != CEU_VALUE_ERROR);
                 int N = tup.Dyn->Tuple.its;
                 if (N > 0) {
