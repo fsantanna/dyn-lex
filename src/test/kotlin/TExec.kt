@@ -10,8 +10,8 @@ import java.io.File
 //  - definitely lost
 //  - Invalid read of size
 //  - uninitialised value
-//val VALGRIND = ""
-val VALGRIND = "valgrind "
+val VALGRIND = ""
+//val VALGRIND = "valgrind "
 val THROW = false
 //val THROW = true
 
@@ -2144,6 +2144,24 @@ class TExec {
         //assert(out == "[1]\n") { out }
         assert(out == "anon : (lin 3, col 17) : declaration error : cannot move to deeper scope with pending references\n") { out }
     }
+
+    // SCOPE | ARGS
+
+    @Test
+    fun lm_01_xxx() {
+        val out = all("""
+            val g = func (v) {
+                println(v)
+            }
+            val f = func (v) {
+                g(v)
+                g(v)
+            }
+            f([1])
+        """)
+        assert(out == "anon : (lin 2, col 30) : argument error : cannot move to deeper scope with pending references\n") { out }
+    }
+
 
     // IF
 
