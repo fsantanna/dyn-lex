@@ -184,7 +184,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         
                         ${isthus.cond { """
                             if (ceu_thus_fleet_${this.n}) {
-                                CEU_Value ret_$N = _ceu_drop_(${(this.es[0] as Expr.Dcl).tk.str.id2c()});
+                                CEU_Value ret_$N = _ceu_drop_(${(this.es[0] as Expr.Dcl).id.str.id2c()});
                                 assert(ret_$N.type == CEU_VALUE_NIL && "TODO-01");
                             }
                         """ }}                

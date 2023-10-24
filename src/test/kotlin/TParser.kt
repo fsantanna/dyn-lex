@@ -436,6 +436,64 @@ class TParser {
         assert(e.tostr() == "do {\n(var a)\n(set a = 1)\nprint(a)\n}") { e.tostr() }
     }
 
+    // THUS AS
+
+    @Test
+    fun oo_01_thus_err() {
+        val l = lexer(
+            """
+            1 thus { as 1 }
+        """
+        )
+        val parser = Parser(l)
+        assert(trap { parser.expr() } == "anon : (lin 2, col 25) : expected identifier : have \"1\"")
+    }
+    @Test
+    fun oo_02_thus_err() {
+        val l = lexer(
+            """
+            1 thus { as x }
+        """
+        )
+        val parser = Parser(l)
+        assert(trap { parser.expr() } == "anon : (lin 2, col 27) : expected \"=>\" : have \"}\"")
+    }
+    @Test
+    fun oo_03_thus_err() {
+        val l = lexer(
+            """
+            1 thus { as x => }
+        """
+        )
+        val parser = Parser(l)
+        assert(trap { parser.expr() } == "anon : (lin 2, col 30) : expected expression : have \"}\"")
+    }
+    @Test
+    fun oo_04_thus() {
+        val l = lexer("""
+            1 thus { as it => nil }
+        """
+        )
+        val parser = Parser(l)
+        val e = parser.exprs()
+        assert(e.tostr() == "((1) thus { as it =>\nnil\n})\n\n") { e.tostr() }
+    }
+    @Test
+    fun oo_05_thus_thus() {
+        val l = lexer("""
+            1 thus { as it => 2 } thus { as it => 3 }
+        """
+        )
+        val parser = Parser(l)
+        val e = parser.exprs()
+        assert(e.tostr() == "((((1) thus { as it =>\n" +
+                "2\n" +
+                "})\n" +
+                ") thus { as it =>\n" +
+                "3\n" +
+                "})\n\n") { e.tostr() }
+    }
+
     // FUNC
 
     @Test

@@ -2168,6 +2168,140 @@ class TExec {
         assert(out == "anon : (lin 2, col 30) : argument error : cannot move in with pending references\n") { out }
     }
 
+    // THUS / SCOPE / :FLEET / :fleet
+
+    @Test
+    fun mm_01_tmp() {
+        val out = all(
+            """
+            var x
+            do {
+                [1,2,3] thus { as a =>
+                    set x = a
+                }
+            }
+            println(x)
+        """
+        )
+        //assert(out == "[1,2,3]\n") { out }
+        assert(out == "anon : (lin 5, col 25) : set error : cannot copy reference out\n") { out }
+    }
+    @Test
+    fun mm_01_tmp_err() {
+        val out = all(
+            """
+            var x
+            do {
+                [1,2,3] thus { as a =>
+                    set x = drop(a)
+                }
+            }
+            println(x)
+        """
+        )
+        //assert(out == "[1,2,3]\n") { out }
+        assert(out == "anon : (lin 5, col 34) : drop error : value is not movable\n") { out }
+    }
+    @Test
+    fun mm_01_tmp_ok() {
+        val out = all(
+            """
+            val x = do {
+                [1,2,3] thus { as a =>
+                    a
+                }
+            }
+            println(x)
+        """
+        )
+        assert(out == "[1,2,3]\n") { out }
+        //assert(out == "anon : (lin 5, col 25) : set error : cannot copy reference out\n") { out }
+    }
+    @Test
+    fun mm_02_thus_err() {
+        val out = all("""
+            var x
+            nil thus { as it =>
+                set x = 10  ;; err
+            }
+            println(x)
+        """)
+        //assert(out == "anon : (lin 4, col 17) : set error : destination across thus\n") { out }
+        assert(out == "10\n") { out }
+    }
+    @Test
+    fun mm_03_thus_err() {
+        val out = all("""
+            var x
+            nil thus { as it =>
+                set x = it  ;; err
+                println(x)
+            }
+        """)
+        //assert(out == "anon : (lin 4, col 17) : set error : destination across thus\n") { out }
+        assert(out == "nil\n") { out }
+    }
+    @Test
+    fun mm_04_tmp() {
+        val out = all(
+            """
+            [0] thus { as x =>
+                set x[0] = []
+                println(x)
+            }
+        """
+        )
+        assert(out == "[[]]\n") { out }
+    }
+    @Test
+    fun mm_05_tmp() {
+        val out = all("""
+            val v = do {
+                [] thus { as x =>
+                    if x { x } else { [] }
+                }
+            }
+            println(v)
+        """)
+        //assert(out == "anon : (lin 3, col 20) : block escape error : cannot copy reference out\n") { out }
+        assert(out == "[]\n") { out }
+    }
+    @Test
+    fun mm_05_tmp_x() {
+        val out = all("""
+            val v = do {
+                [] thus { as x =>
+                    if x { drop(x) } else { [] }
+                }
+            }
+            println(v)
+        """)
+        //assert(out == "[]\n") { out }
+        assert(out == "anon : (lin 4, col 33) : drop error : value is not movable\n") { out }
+    }
+    @Test
+    fun mm_06_tmp_err() {
+        val out = all("""
+            val v = do {
+                val x = []
+                if x { x } else { [] }
+            }
+            println(v)
+        """)
+        assert(out == "anon : (lin 2, col 21) : block escape error : cannot copy reference out\n") { out }
+    }
+    @Test
+    fun mm_07_and_or() {
+        val out = all("""
+            val t = func () { println(:t) ; true  }
+            val f = func () { println(:f) ; false }
+            println(t() and f())
+            println(t() or f())
+            println([] and false)
+            println(false or [])
+        """)
+        assert(out == ":t\n:f\nfalse\n:t\ntrue\nfalse\n[]\n") { out }
+    }
 
     // IF
 
