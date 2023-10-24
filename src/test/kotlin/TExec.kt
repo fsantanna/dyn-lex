@@ -2145,6 +2145,24 @@ class TExec {
         assert(out == "anon : (lin 3, col 17) : declaration error : cannot move to deeper scope with pending references\n") { out }
     }
 
+    // SCOPE | ARGS
+
+    @Test
+    fun lm_01_xxx() {
+        val out = all("""
+            val g = func (v) {
+                println(v)
+            }
+            val f = func (v) {
+                g(v)
+                g(v)
+            }
+            f([1])
+        """)
+        assert(out == "anon : (lin 2, col 30) : argument error : cannot move to deeper scope with pending references\n") { out }
+    }
+
+
     // IF
 
     @Test
