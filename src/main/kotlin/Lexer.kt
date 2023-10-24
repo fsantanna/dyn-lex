@@ -328,7 +328,7 @@ class Lexer (inps: List<Pair<Triple<String,Int,Int>,Reader>>) {
                                 if (x4 == ',') {
                                     read2While { it.isDigit() }.let {
                                         if (it.isEmpty()) {
-                                            err(pos, "invalid ^ token : expected number")
+                                            err(pos, "token ^ error : expected number")
                                         }
                                         it.toInt()
                                     }
@@ -344,7 +344,7 @@ class Lexer (inps: List<Pair<Triple<String,Int,Int>,Reader>>) {
                                 if (x5 == ',') {
                                     read2While { it.isDigit() }.let {
                                         if (it.isEmpty()) {
-                                            err(pos, "invalid ^ token : expected number")
+                                            err(pos, "token ^ error : expected number")
                                         }
                                         it.toInt()
                                     }

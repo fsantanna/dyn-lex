@@ -301,7 +301,7 @@ class TParser {
         val parser = Parser(l)
         //println(parser.exprs().tostr())
         //assert(es.tostr() == "f()\n1\nh()\ni()\n") { es.tostr() }
-        assert(trap { parser.exprs() } == "anon : (lin 2, col 3) : invalid expression : innocuous expression")
+        assert(trap { parser.exprs() } == "anon : (lin 2, col 3) : expression error : innocuous expression")
     }
     @Test
     fun exprs_seq2a() {
@@ -370,7 +370,7 @@ class TParser {
         val parser = Parser(l)
         //val e = parser.exprN()
         //assert(e.tostr() == "set 1 = 1")
-        assert(trap { parser.expr() } == "anon : (lin 1, col 1) : invalid set : expected assignable destination")
+        assert(trap { parser.expr() } == "anon : (lin 1, col 1) : set error : expected assignable destination")
     }
     @Test
     fun expr_err2() {  // set whole tuple?
@@ -378,26 +378,26 @@ class TParser {
         val parser = Parser(l)
         //val e = parser.exprN()
         //assert(e.tostr() == "set [1] = 1")
-        assert(trap { parser.expr() } == "anon : (lin 1, col 1) : invalid set : expected assignable destination")
+        assert(trap { parser.expr() } == "anon : (lin 1, col 1) : set error : expected assignable destination")
     }
     @Test
     fun set_nil_err() {
         val l = lexer("set nil = nil")
         val parser = Parser(l)
-        assert(trap { parser.expr() } == "anon : (lin 1, col 1) : invalid set : expected assignable destination")
+        assert(trap { parser.expr() } == "anon : (lin 1, col 1) : set error : expected assignable destination")
     }
     @Test
     fun set_if_err() {
         val l = lexer("set (if true {nil} else {nil}) = nil")
         val parser = Parser(l)
-        assert(trap { parser.expr() } == "anon : (lin 1, col 1) : invalid set : expected assignable destination")
+        assert(trap { parser.expr() } == "anon : (lin 1, col 1) : set error : expected assignable destination")
     }
     @Test
     fun set_err_err() {
         val l = lexer("set err = nil")
         val parser = Parser(l)
         assert(parser.expr() is Expr.Set)
-        //assert(trap { parser.expr() } == "anon : (lin 1, col 1) : invalid set : expected assignable destination")
+        //assert(trap { parser.expr() } == "anon : (lin 1, col 1) : set error : expected assignable destination")
     }
 
     // IF
@@ -482,7 +482,7 @@ class TParser {
     fun pp_10_func_args_err() {
         val l = lexer("var ...")
         val parser = Parser(l)
-        assert(trap { parser.expr() } == "anon : (lin 1, col 5) : invalid declaration : unexpected ...")
+        assert(trap { parser.expr() } == "anon : (lin 1, col 5) : declaration error : unexpected ...")
     }
     @Test
     fun pp_11_func_args_err() {
@@ -490,7 +490,7 @@ class TParser {
         val parser = Parser(l)
         //val e = parser.expr()
         //assert(e.tostr() == "set ... = 10") { e.tostr() }
-        assert(trap { parser.expr() } == "anon : (lin 1, col 5) : invalid set : unexpected ...")
+        assert(trap { parser.expr() } == "anon : (lin 1, col 5) : set error : unexpected ...")
     }
 
     // LOOP

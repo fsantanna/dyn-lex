@@ -391,7 +391,7 @@ class TLexer {
     fun inc5_err() {
         val l = lexer("^[1,]")
         val tks = l.lex().iterator()
-        assert(trap { tks.next() } == "anon : (lin 1, col 1) : invalid ^ token : expected number")
+        assert(trap { tks.next() } == "anon : (lin 1, col 1) : token ^ error : expected number")
     }
     @Test
     fun inc6_err() {

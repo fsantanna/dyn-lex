@@ -25,7 +25,7 @@ class Static (outer: Expr.Do, val ups: Ups, val vars: Vars) {
                 if (this.dst is Expr.Acc) {
                     val (_,dcl) = vars.get(this.dst)
                     if (dcl.tk.str == "val") {
-                        err(this.tk, "invalid set : destination is immutable")
+                        err(this.tk, "set error : destination is immutable")
                     }
                 }
             }
@@ -33,7 +33,7 @@ class Static (outer: Expr.Do, val ups: Ups, val vars: Vars) {
             is Expr.Loop   -> {
                 this.body.es.last().let {
                     if (it.is_innocuous()) {
-                        //err(it.tk, "invalid expression : innocuous expression")
+                        //err(it.tk, "expression error : innocuous expression")
                         TODO("never reachable - checked in parser - remove in the future")
                     }
                 }
@@ -43,7 +43,7 @@ class Static (outer: Expr.Do, val ups: Ups, val vars: Vars) {
                 if (ups.pub[this] is Expr.Do && ups.pub[ups.pub[this]] is Expr.Loop) {
                     // ok
                 } else {
-                    err(this.tk, "invalid break : expected parent loop")
+                    err(this.tk, "break error : expected parent loop")
                 }
                 this.cnd.traverse()
                 this.e?.traverse()

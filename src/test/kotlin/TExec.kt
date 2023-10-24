@@ -218,7 +218,7 @@ class TExec {
             set v = 10
         """
         )
-        assert(out == "anon : (lin 3, col 13) : invalid set : destination is immutable") { out }
+        assert(out == "anon : (lin 3, col 13) : set error : destination is immutable") { out }
     }
     @Test
     fun bb_07_und() {
@@ -289,7 +289,7 @@ class TExec {
             nil
         """
         )
-        assert(out == "anon : (lin 2, col 13) : invalid expression : innocuous expression") { out }
+        assert(out == "anon : (lin 2, col 13) : expression error : innocuous expression") { out }
     }
     @Test
     fun cc_index01() {
@@ -473,7 +473,7 @@ class TExec {
                 var x
                 if v > 0 {
                     set x = f(v - 1)
-                    [x]     ;; invalid set: cannot return "var x" from this scope
+                    [x]     ;; set error: cannot return "var x" from this scope
                 } else {
                     0
                 }
@@ -1172,7 +1172,7 @@ class TExec {
             set #v = 0
         """
         )
-        assert(out == "anon : (lin 2, col 13) : invalid set : expected assignable destination") { out }
+        assert(out == "anon : (lin 2, col 13) : set error : expected assignable destination") { out }
     }
     @Test
     fun vector13_add() {
@@ -1315,7 +1315,7 @@ class TExec {
             set 1 = 1
         """.trimIndent()
         )
-        assert(out == "anon : (lin 1, col 1) : invalid set : expected assignable destination") { out }
+        assert(out == "anon : (lin 1, col 1) : set error : expected assignable destination") { out }
     }
     @Test
     fun set_err2() {
@@ -1324,7 +1324,7 @@ class TExec {
             set [1] = 1
         """.trimIndent()
         )
-        assert(out == "anon : (lin 1, col 1) : invalid set : expected assignable destination") { out }
+        assert(out == "anon : (lin 1, col 1) : set error : expected assignable destination") { out }
     }
     @Test
     fun set_index() {
@@ -1574,7 +1574,7 @@ class TExec {
             println(x)
         """
         )
-        assert(out == "anon : (lin 4, col 26) : invalid declaration : expected \"val\" for \":tmp\"") { out }
+        assert(out == "anon : (lin 4, col 26) : declaration error : expected \"val\" for \":tmp\"") { out }
         //assert(out == "anon : (lin 3, col 13) : set error : incompatible scopes\n") { out }
     }
     @Test
@@ -1590,7 +1590,7 @@ class TExec {
             println(x)
         """
         )
-        assert(out == "anon : (lin 5, col 17) : invalid set : destination is immutable") { out }
+        assert(out == "anon : (lin 5, col 17) : set error : destination is immutable") { out }
         //assert(out == "anon : (lin 3, col 13) : set error : incompatible scopes\n") { out }
     }
     @Test
@@ -2626,7 +2626,7 @@ class TExec {
         """
         )
         //assert(out == "1\n") { out }
-        assert(out == "anon : (lin 3, col 21) : invalid set : unexpected ...") { out }
+        assert(out == "anon : (lin 3, col 21) : set error : unexpected ...") { out }
     }
 
     // LOOP
@@ -2641,7 +2641,7 @@ class TExec {
             }
             println(:out)
         """)
-        assert(out == "anon : (lin 4, col 21) : invalid break : expected parent loop") { out }
+        assert(out == "anon : (lin 4, col 21) : break error : expected parent loop") { out }
     }
     @Test
     fun oo_02_loop() {
@@ -2756,7 +2756,7 @@ class TExec {
             }
             println(:ok)
         """)
-        assert(out == "anon : (lin 5, col 21) : invalid break : expected parent loop") { out }
+        assert(out == "anon : (lin 5, col 21) : break error : expected parent loop") { out }
     }
     @Test
     fun oo_10_loop() {
@@ -3570,7 +3570,7 @@ class TExec {
         """
         )
         //assert(out == "anon : (lin 6, col 21) : set error : cannot reassign an upval") { out }
-        assert(out == "anon : (lin 6, col 17) : invalid set : destination is immutable") { out }
+        assert(out == "anon : (lin 6, col 17) : set error : destination is immutable") { out }
     }
     @Test
     fun clo6_err() {
@@ -3589,7 +3589,7 @@ class TExec {
         """
         )
         //assert(out == "anon : (lin 7, col 25) : set error : cannot reassign an upval") { out }
-        assert(out == "anon : (lin 7, col 21) : invalid set : destination is immutable") { out }
+        assert(out == "anon : (lin 7, col 21) : set error : destination is immutable") { out }
     }
     @Test
     fun clo7_err() {

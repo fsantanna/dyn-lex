@@ -204,10 +204,10 @@ class Parser (lexer_: Lexer)
                 this.acceptEnu_err("Id")
                 val id = this.tk0 as Tk.Id
                 if (id.str == "...") {
-                    err(this.tk0, "invalid declaration : unexpected ...")
+                    err(this.tk0, "declaration error : unexpected ...")
                 }
                 if (tmp && tk0.str!="val") {
-                    err(this.tk0, "invalid declaration : expected \"val\" for \":tmp\"")
+                    err(this.tk0, "declaration error : expected \"val\" for \":tmp\"")
                 }
                 val tag = if (!this.acceptEnu("Tag")) null else {
                     this.tk0 as Tk.Tag
@@ -221,12 +221,12 @@ class Parser (lexer_: Lexer)
                 val tk0 = this.tk0 as Tk.Fix
                 val dst = this.expr()
                 if (dst is Expr.Acc && dst.tk.str == "...") {
-                    err(this.tk0, "invalid set : unexpected ...")
+                    err(this.tk0, "set error : unexpected ...")
                 }
                 this.acceptFix_err("=")
                 val src = this.expr()
                 if (!dst.is_lval()) {
-                    err(tk0, "invalid set : expected assignable destination")
+                    err(tk0, "set error : expected assignable destination")
                 }
                 Expr.Set(tk0, dst, /*null,*/ src)
             }
@@ -473,7 +473,7 @@ class Parser (lexer_: Lexer)
         ret.forEachIndexed { i,e ->
             val ok = (i == ret.size-1) || !e.is_innocuous()
             if (!ok) {
-                err(e.tk, "invalid expression : innocuous expression")
+                err(e.tk, "expression error : innocuous expression")
             }
         }
         return ret
