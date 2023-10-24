@@ -1553,8 +1553,9 @@ class TExec {
             """
             var x
             do {
-                val :tmp a = [1,2,3]
-                set x = a
+                [1,2,3] thus { as a =>
+                    set x = a
+                }
             }
             println(x)
         """
@@ -1568,13 +1569,15 @@ class TExec {
             """
             var x
             do {
-                var :tmp a = [1,2,3]
-                set x = a
+                [1,2,3] thus {
+                    set x = it
+                }
             }
             println(x)
         """
         )
-        assert(out == "anon : (lin 4, col 26) : declaration error : expected \"val\" for \":tmp\"") { out }
+        assert(out == "[1,2,3]\n") { out }
+        //assert(out == "anon : (lin 4, col 26) : declaration error : expected \"val\" for \":tmp\"") { out }
         //assert(out == "anon : (lin 3, col 13) : set error : incompatible scopes\n") { out }
     }
     @Test
@@ -1583,9 +1586,10 @@ class TExec {
             """
             var x
             do {
-                val :tmp a
-                set a = [1,2,3]
-                set x = a
+                nil thus { as a =>
+                    set a = [1,2,3]
+                    set x = a
+                }
             }
             println(x)
         """
@@ -1670,9 +1674,10 @@ class TExec {
     fun scope14_tmp_tuple() {
         val out = all(
             """
-            val :tmp x = [0]
-            set x[0] = []
-            println(x)
+            [0] thus {
+                set it[0] = []
+                println(it)
+            }
         """
         )
         assert(out == "[[]]\n") { out }
@@ -2121,8 +2126,9 @@ class TExec {
     fun ll_04_fleet_tuple_func_err() {
         val out = all("""
             var f = func (v) {
-                val :tmp x = v[0]
-                println(x)
+                v[0] thus {
+                    println(it)
+                }
             }
             var g = func (v) {
                 val evt = v
@@ -2262,8 +2268,9 @@ class TExec {
     fun xop3_or_and() {
         val out = all("""
             val v = do {
-                val :tmp x = []
-                if x { x } else { [] }
+                [] thus { as x =>
+                    if x { x } else { [] }
+                }
             }
             println(v)
         """)
@@ -3487,7 +3494,7 @@ class TExec {
             )
         """, true
         )
-        assert(out == "15\t1000\t1001\t1002\t10\t11\t12\t16\t100\t101\t17\n") { out }
+        assert(out == "14\t1000\t1001\t1002\t10\t11\t12\t15\t100\t101\t16\n") { out }
     }
     @Test
     fun enum02() {

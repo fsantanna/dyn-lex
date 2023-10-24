@@ -100,6 +100,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
             is Expr.Do -> {
                 val body = this.es.map { it.code() }.joinToString("")   // before defers[this] check
                 val up = ups.pub[this]
+                val isthus = (this.tk.str == "thus")
                 val bupc = up?.let { ups.first_block(it) }?.toc()
                 val f_b = up?.let { ups.first_proto_or_block(it) }
                 val (depth,bf,ptr) = when {
@@ -181,6 +182,13 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         $loop_body
                         // <<< block
                         
+                        ${isthus.cond { """
+                            if (ceu_thus_fleet_${this.n}) {
+                                CEU_Value ret_$N = _ceu_drop_(${(this.es[0] as Expr.Dcl).tk.str.id2c()});
+                                assert(ret_$N.type == CEU_VALUE_NIL && "TODO-01");
+                            }
+                        """ }}                
+
                         ${(f_b != null).cond {
                             val up1 = if (f_b is Expr.Proto) "ceu_frame->up_block" else bupc!!
                             """
@@ -215,8 +223,10 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
             is Expr.Dcl -> {
                 val id = this.id.str
                 val idc = id.id2c()
-                val bupc = ups.first_block(this)!!.toc()
+                val blk = ups.first_block(this)!!
+                val bupc = blk.toc()
                 val unused = false // TODO //sta.unused.contains(this) && (this.src is Expr.Closure)
+                val isthus = ups.pub[this].let { it is Expr.Do && it.tk.str=="thus" && it.es[0]==this }
 
                 if (this.id.upv==1 && clos.vars_refs.none { it.second==this }) {
                     err(this.tk, "var error : unreferenced upvar")
@@ -224,14 +234,21 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
 
                 """
                 // DCL | ${this.dump()}
-                ${(this.init && this.src!=null && !unused).cond {
-                    this.src!!.code() + (!this.tmp).cond { """
+                ${(this.init && this.src !=null && !unused).cond {
+                    this.src!!.code() + isthus.cond2({ """
+                        int ceu_thus_fleet_${blk.n} = 0;
+                        if (ceu_acc.type>CEU_VALUE_DYNAMIC && ceu_acc.Dyn->Any.hld_type==CEU_HOLD_FLEET) {
+                            ceu_thus_fleet_${blk.n} = 1;
+                            CEU_Value ret_$N = ceu_hold_chk_set(&$bupc->dyns, $bupc->depth, CEU_HOLD_IMMUT, ceu_acc, 0, "TODO");
+                            assert(ret_$N.type == CEU_VALUE_NIL && "TODO-02");
+                        }
+                    """ },{ """ 
                         ceu_assert_pre(
                             $bupc,
                             ceu_hold_chk_set(&$bupc->dyns, $bupc->depth, CEU_HOLD_MUTAB, ceu_acc, 0, "declaration error"),
                             "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})"
                         );
-                    """ }
+                    """ })
                 }}
                 ${if (id == "_") "" else {
                     """
@@ -303,7 +320,6 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         if (dcl.id.upv > 0) {
                             err(tk, "set error : cannot reassign an upval")
                         }
-                        assert(!dcl.tmp)    // removed support for "val :tmp x"
                         """
                         { // ACC - SET
                             ceu_assert_pre(

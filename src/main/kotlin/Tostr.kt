@@ -25,19 +25,29 @@ fun Expr.tostr (pre: Boolean = false): String {
             }.joinToString(",")
             "(" + this.tk.str + " (" + args + ") " + this.body.tostr(pre) + ")"
         }
-        is Expr.Do     -> (this.tk.str=="do").cond{"do "} + "{\n" + this.es.tostr(pre) + "}"
-        is Expr.Dcl    -> {
-            this.tk_.str + this.tmp.cond { ":tmp" } + " " + this.id.tostr() + this.tag.cond{" "+it.str} + this.src.cond { " = ${it.tostr(pre)}" }
+        is Expr.Do     -> {
+            when (this.tk.str) {
+                "do" -> "do {\n" + this.es.tostr(pre) + "}"
+                "thus" -> {
+                    val dcl = this.es[0] as Expr.Dcl
+                    val id_tag = dcl.id.tostr() + dcl.tag.cond{" "+it.str}
+                    "((${dcl.src!!.tostr(pre)}) thus { as $id_tag =>\n${this.es.drop(1).tostr(pre)}})\n"
+                }
+                else -> "{\n" + this.es.tostr(pre) + "}"
+            }
         }
-        is Expr.Set    -> "set " + this.dst.tostr(pre) + " = " + this.src.tostr(pre)
+        is Expr.Dcl    -> {
+            "(" + this.tk_.str + " " + this.id.tostr() + this.tag.cond{" "+it.str} + this.src.cond { " = ${it.tostr(pre)}" } + ")"
+        }
+        is Expr.Set    -> "(set " + this.dst.tostr(pre) + " = " + this.src.tostr(pre) + ")"
         is Expr.If     -> "if " + this.cnd.tostr(pre) + " " + this.t.tostr(pre) + " else " + this.f.tostr(pre)
         is Expr.Loop   -> "loop " + this.body.tostr(pre)
-        is Expr.Break  -> "break" + this.e.cond { "("+it.tostr(pre)+")" } + " if " + this.cnd.tostr(pre)
+        is Expr.Break  -> "(break" + this.e.cond { "("+it.tostr(pre)+")" } + " if " + this.cnd.tostr(pre) + ")"
         is Expr.Enum   -> "enum {\n" + this.tags.map {
             (tag,e) -> tag.str + e.cond { " = " + "`" + it.str + "`" }
         }.joinToString(",\n") + "\n}"
-        is Expr.Data   -> "data " + this.tk.str + " = [" + this.ids.map { it.first.str + (it.second?.str ?: "") }.joinToString(",") + "]"
-        is Expr.Pass   -> "pass " + this.e.tostr(pre)
+        is Expr.Data   -> "(data " + this.tk.str + " = [" + this.ids.map { it.first.str + (it.second?.str ?: "") }.joinToString(",") + "])"
+        is Expr.Pass   -> "(pass " + this.e.tostr(pre) + ")"
         is Expr.Drop   -> "drop(" + this.e.tostr(pre) + ")"
 
         is Expr.Nat    -> "```" + (this.tk_.tag ?: "") + " " + this.tk.str + "```"

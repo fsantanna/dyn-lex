@@ -9,7 +9,7 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
         Expr.Dcl (
             Tk.Fix("val", outer.tk.pos),
             Tk.Id(it,outer.tk.pos,0),
-            false, null, true, null
+            null, true, null
         )
     }.toMutableList()
     public  val dcl_to_blk: MutableMap<Expr.Dcl,Expr.Do> = dcls.map {
@@ -117,13 +117,13 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
                     up.args.forEach { (id,tag) ->
                         val dcl1 = Expr.Dcl (
                             Tk.Fix("val", this.tk.pos),
-                            id, /*false,*/ false, tag, true, null
+                            id, /*false,*/  tag, true, null
                         )
                         val dcl2 = Expr.Dcl (
                             Tk.Fix("val", this.tk.pos),
                             Tk.Id("_${id.str}_",id.pos,id.upv),
                             /*false,*/
-                            false, null, false, null
+                            null, false, null
                         )
                         dcls.add(dcl1)
                         dcls.add(dcl2)

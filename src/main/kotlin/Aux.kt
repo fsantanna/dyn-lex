@@ -4,6 +4,13 @@ fun Pos.isSameLine (oth: Pos): Boolean {
     return (this.file==oth.file && this.lin==oth.lin)
 }
 
+fun <T> T?.cond2 (f: (v:T)->String, g: (()->String)?): String {
+    return when (this) {
+        false, null -> if (g != null) g() else ""
+        else  -> f(this)
+    }
+}
+
 fun <T> T?.cond (f: (v:T)->String): String {
     return when (this) {
         null  -> ""
