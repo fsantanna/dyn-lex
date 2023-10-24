@@ -616,35 +616,59 @@ fun Coder.main (tags: Tags): String {
             ceu_hold_add(dyn, nxt);
         }
 
-        CEU_Value ceu_hold_chk_set (CEU_Dyn** dst, int depth, CEU_HOLD type, CEU_Value src, int nest, char* pre) {
-            static char msg[256];
+        CEU_Value ceu_hold_chk_set (CEU_Dyn** dst, int dst_depth, CEU_HOLD dst_type, CEU_Value src, int nest, char* pre) {
             if (src.type < CEU_VALUE_DYNAMIC) {
+                // nothing to do
                 return (CEU_Value) { CEU_VALUE_NIL };
-            } else if (src.Dyn->Any.hld_type == CEU_HOLD_FLEET) {
-                if (src.Dyn->Any.refs-nest>0 && depth>src.Dyn->Any.hld_depth) {
-                    strncpy(msg, pre, 256);
-                    strcat(msg, " : cannot move to deeper scope with pending references");
-                    return (CEU_Value) { CEU_VALUE_ERROR, {.Error=msg} };
-                } else {
-                    // continue below
-                }
-            } else if (depth >= src.Dyn->Any.hld_depth) {
-                return (CEU_Value) { CEU_VALUE_NIL };
-            } else {
-                strncpy(msg, pre, 256);
-                strcat(msg, " : cannot copy reference to outer scope");
-                return (CEU_Value) { CEU_VALUE_ERROR, {.Error=msg} };
-            };
-
-            int src_depth = src.Dyn->Any.hld_depth;
-            int src_type  = src.Dyn->Any.hld_type;
-
-            src.Dyn->Any.hld_type = MAX(src.Dyn->Any.hld_type,type);
-            if (depth != src.Dyn->Any.hld_depth) {
-                ceu_hold_chg(src.Dyn, dst, depth);
             }
-            if (src.Dyn->Any.hld_type==src_type && depth>=src_depth) {
-                return (CEU_Value) { CEU_VALUE_NIL };
+                        
+            static char msg[256];
+            int src_depth = src.Dyn->Any.hld_depth;
+            CEU_HOLD src_type = src.Dyn->Any.hld_type;
+            
+            // dst <- src
+            if (dst_depth == src_depth) {
+                if (dst_type == src_type) {
+                    // nothing is supposed to change
+                    return (CEU_Value) { CEU_VALUE_NIL };
+                }
+            } else if (dst_depth > src_depth) {
+                // src is parent of dst | assigning to nested scope | "safe"
+                if (src_type == CEU_HOLD_FLEET) {
+                    if (src.Dyn->Any.refs-nest > 0) {
+                        // unsafe if passing dropped reference to inner scope:
+                        // can be reassigned -> reclaimed -> dangling outer reference
+                        strncpy(msg, pre, 256);
+                        strcat(msg, " : cannot move in with pending references");
+                        return (CEU_Value) { CEU_VALUE_ERROR, {.Error=msg} }; // OK with CEU_HOLD_EVENT b/c never assigned
+                    } else {
+                        // safe
+                    }
+                } else {
+                    // nothing is supposed to change
+                    // assigning non-fleeting reference to nested scope
+                    return (CEU_Value) { CEU_VALUE_NIL };
+                }
+            } else {
+                // dst is parent of src | assigning to outer scope | "unsafe"
+                // dst and src are par  | assigning to alien scope | "unsafe"
+                if (src.Dyn->Any.hld_type == CEU_HOLD_FLEET) {
+                    // SAFE if dropped or unassigned reference
+                    // can move out and be reassigned by outer scope
+                    // EXCEPT if TRACK leaving its TASK scope
+                } else {
+                    strncpy(msg, pre, 256);
+                    strcat(msg, " : cannot copy reference out");
+                    return (CEU_Value) { CEU_VALUE_ERROR, {.Error=msg} };
+                }
+            }
+            
+            // change type
+            src.Dyn->Any.hld_type = MAX(src_type,dst_type);
+            
+            // change block
+            if (dst_depth != src_depth) {
+                ceu_hold_chg(src.Dyn, dst, dst_depth);
             }
             
             #define CEU_CHECK_ERROR_RETURN(v) { CEU_Value ret=v; if (ret.type==CEU_VALUE_ERROR) { return ret; } }
@@ -652,25 +676,27 @@ fun Coder.main (tags: Tags): String {
             switch (src.Dyn->Any.type) {
                 case CEU_VALUE_CLOSURE:
                     for (int i=0; i<src.Dyn->Closure.upvs.its; i++) {
-                        CEU_CHECK_ERROR_RETURN(ceu_hold_chk_set(dst, depth, type, src.Dyn->Closure.upvs.buf[i], 1, pre));
+                        CEU_CHECK_ERROR_RETURN(ceu_hold_chk_set(dst, dst_type, dst_depth, src.Dyn->Closure.upvs.buf[i], 1, pre));
                     }
                     break;
                 case CEU_VALUE_TUPLE:
                     for (int i=0; i<src.Dyn->Tuple.its; i++) {
-                        CEU_CHECK_ERROR_RETURN(ceu_hold_chk_set(dst, depth, type, src.Dyn->Tuple.buf[i], 1, pre));
+                        CEU_CHECK_ERROR_RETURN(ceu_hold_chk_set(dst, dst_type, dst_depth, src.Dyn->Tuple.buf[i], 1, pre));
                     }
                     break;
                 case CEU_VALUE_VECTOR:
                     for (int i=0; i<src.Dyn->Vector.its; i++) {
-                        CEU_CHECK_ERROR_RETURN(ceu_hold_chk_set(dst, depth, type, ceu_vector_get(&src.Dyn->Vector,i), 1, pre));
+                        CEU_CHECK_ERROR_RETURN(ceu_hold_chk_set(dst, dst_type, dst_depth, ceu_vector_get(&src.Dyn->Vector,i), 1, pre));
                     }
                     break;
                 case CEU_VALUE_DICT:
                     for (int i=0; i<src.Dyn->Dict.max; i++) {
-                        CEU_CHECK_ERROR_RETURN(ceu_hold_chk_set(dst, depth, type, (*src.Dyn->Dict.buf)[i][0], 1, pre));
-                        CEU_CHECK_ERROR_RETURN(ceu_hold_chk_set(dst, depth, type, (*src.Dyn->Dict.buf)[i][1], 1, pre));
+                        CEU_CHECK_ERROR_RETURN(ceu_hold_chk_set(dst, dst_type, dst_depth, (*src.Dyn->Dict.buf)[i][0], 1, pre));
+                        CEU_CHECK_ERROR_RETURN(ceu_hold_chk_set(dst, dst_type, dst_depth, (*src.Dyn->Dict.buf)[i][1], 1, pre));
                     }
                     break;
+                default:
+                    break; // not applicable
             }
             return (CEU_Value) { CEU_VALUE_NIL };
         }
