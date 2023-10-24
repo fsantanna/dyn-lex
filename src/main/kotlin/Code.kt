@@ -331,7 +331,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         }
                         """
                     }
-                    else -> "ceu_acc = $idc;"
+                    else -> "ceu_acc = $idc;\n"
                 }
             }
             is Expr.Nil -> "ceu_acc = ((CEU_Value) { CEU_VALUE_NIL });"
