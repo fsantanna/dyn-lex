@@ -143,17 +143,17 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                             val args_n = f_b.args.size - 1
                             """
                             { // func args
+                                ceu_gc_inc_args(ceu_n, ceu_args);
                                 ${f_b.args.filter { it.first.str!="..." }.mapIndexed { i,arg ->
                                     val idc = arg.first.str.id2c()
                                     """
                                     if ($i < ceu_n) {
                                         ceu_assert_pre(
                                             ceu_block_$n,
-                                            ceu_hold_chk_set(&ceu_block_$n->dyns, ceu_block_$n->depth, CEU_HOLD_FLEET, ceu_args[$i], 0, "argument error"),
+                                            ceu_hold_chk_set(&ceu_block_$n->dyns, ceu_block_$n->depth, CEU_HOLD_FLEET, ceu_args[$i], 1, "argument error"),
                                             "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})"
                                         );
                                         $idc = ceu_args[$i];
-                                        ceu_gc_inc($idc);
                                     } else {
                                         $idc = (CEU_Value) { CEU_VALUE_NIL };
                                     }

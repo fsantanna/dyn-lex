@@ -4037,8 +4037,8 @@ class TExec {
             println(`:number ceu_gc_count`)
         """
         )
-        //assert(out == "2\n") { out }
-        assert(out == "0\n") { out }
+        assert(out == "2\n") { out }
+        //assert(out == "0\n") { out }
     }
     @Test
     fun gc8() {
@@ -4114,7 +4114,7 @@ class TExec {
             println(`:number ceu_gc_count`)
         """
         )
-        assert(out == "[]\n0\n") { out }
+        assert(out == "[]\n1\n") { out }
     }
     @Test
     fun gc15_arg() {
