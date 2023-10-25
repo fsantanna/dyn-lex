@@ -83,7 +83,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                             CEU_Value ceu_up = ${vars.id2c(dcl, upv)};
                             assert(ceu_hold_chk_set_col(ceu_ret_$n.Dyn, ceu_up).type != CEU_VALUE_ERROR);
                             ceu_gc_inc(ceu_up);
-                            ((CEU_Proto_Upvs_$n*)ceu_ret_$n.Dyn->Closure.upvs.buf)->${idc} = ceu_up;
+                            ((CEU_Proto_Upvs_$n*)ceu_ret_$n.Dyn->Clo.upvs.buf)->${idc} = ceu_up;
                         }
                         """   // TODO: use this.body (ups.ups[this]?) to not confuse with args
                     }.joinToString("\n")
@@ -151,7 +151,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                                     if ($i < ceu_n) {
                                         ceu_assert_pre(
                                             ceu_block_$n,
-                                            ceu_hold_chk_set(&ceu_block_$n->dyns, ceu_block_$n->depth, CEU_HOLD_FLEET, ceu_args[$i], 1, "argument error"),
+                                            ceu_hold_chk_set(ceu_block_$n, CEU_HOLD_FLEET, ceu_args[$i], 1, "argument error"),
                                             "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})"
                                         );
                                         $idc = ceu_args[$i];
@@ -195,14 +195,14 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                             // move up dynamic ceu_acc (return or error)
                             ceu_assert_pre(
                                 ceu_block_$n, 
-                                ceu_hold_chk_set(&$up1->dyns, $up1->depth, CEU_HOLD_FLEET, ceu_acc, 0, "block escape error"),
+                                ceu_hold_chk_set($up1, CEU_HOLD_FLEET, ceu_acc, 0, "block escape error"),
                                 "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})"
                             );
                             """
                         }}
                         ${dcls.filter { it != "_" }.map { """
                             if ($it.type > CEU_VALUE_DYNAMIC) {
-                                ceu_gc_dec($it, ($it.Dyn->Any.hld_depth == ceu_block_$n->depth));
+                                ceu_gc_dec($it, ($it.Dyn->Any.hld.block == ceu_block_$n));
                             }
                         """ }.joinToString("")}
                         ${(f_b is Expr.Proto).cond { """
@@ -225,7 +225,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 val idc = id.id2c()
                 val blk = ups.first_block(this)!!
                 val bupc = blk.toc()
-                val unused = false // TODO //sta.unused.contains(this) && (this.src is Expr.Closure)
+                val unused = false // TODO //sta.unused.contains(this) && (this.src is Expr.Clo)
                 val isthus = ups.pub[this].let { it is Expr.Do && it.tk.str=="thus" && it.es[0]==this }
 
                 if (this.id.upv==1 && clos.vars_refs.none { it.second==this }) {
@@ -239,13 +239,13 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         int ceu_thus_fleet_${blk.n} = 0;
                         if (ceu_acc.type>CEU_VALUE_DYNAMIC && ceu_acc.Dyn->Any.hld_type==CEU_HOLD_FLEET) {
                             ceu_thus_fleet_${blk.n} = 1;
-                            CEU_Value ret_$N = ceu_hold_chk_set(&$bupc->dyns, $bupc->depth, CEU_HOLD_IMMUT, ceu_acc, 0, "TODO");
+                            CEU_Value ret_$N = ceu_hold_chk_set($bupc, CEU_HOLD_IMMUT, ceu_acc, 0, "TODO");
                             assert(ret_$N.type == CEU_VALUE_NIL && "TODO-02");
                         }
                     """ },{ """ 
                         ceu_assert_pre(
                             $bupc,
-                            ceu_hold_chk_set(&$bupc->dyns, $bupc->depth, CEU_HOLD_MUTAB, ceu_acc, 0, "declaration error"),
+                            ceu_hold_chk_set($bupc, CEU_HOLD_MUTAB, ceu_acc, 0, "declaration error"),
                             "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})"
                         );
                     """ })
@@ -324,7 +324,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         { // ACC - SET
                             ceu_assert_pre(
                                 $bupc,
-                                ceu_hold_chk_set(&$blkc->dyns, $blkc->depth, CEU_HOLD_MUTAB, $src, 0, "set error"),
+                                ceu_hold_chk_set($blkc, CEU_HOLD_MUTAB, $src, 0, "set error"),
                                 "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})"
                             );
                             ceu_gc_inc($src);
@@ -543,7 +543,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         CEU_Value err = { CEU_VALUE_ERROR, {.Error="call error : expected function"} };
                         ceu_ferror_pre($bupc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", err);
                     }
-                    CEU_Frame ceu_frame_$n = { &ceu_closure_$n.Dyn->Closure, $bupc };
+                    CEU_Frame ceu_frame_$n = { &ceu_closure_$n.Dyn->Clo, $bupc };
                     ${has_dots.cond { """
                         int ceu_dots_$n = $id_dots.Dyn->Tuple.its;
                     """ }}
