@@ -421,7 +421,7 @@ fun Coder.main (tags: Tags): String {
                     }
                     return ret;
                 }
-                case 3: {   // add/rem
+                default: {   // add/rem
                     assert(dyn.type > CEU_VALUE_DYNAMIC);
                     CEU_Value bool = args[2];
                     assert(bool.type == CEU_VALUE_BOOL);
